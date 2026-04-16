@@ -17,7 +17,7 @@ export async function GET(request) {
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
   const units = searchParams.get("units") || "metric";
-  const lang = searchParams.get("lang") || "pl";
+  const lang = searchParams.get("lang") || "en";
 
   const endpoint = type === "forecast" ? "forecast" : "weather";
   const owParams = new URLSearchParams({
