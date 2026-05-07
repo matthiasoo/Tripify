@@ -32,7 +32,8 @@ public class TripPlannerService {
     }
 
     public TripPlanResponse planTrip(String city) {
-        log.info("Starting trip planning for {} on main thread. Is virtual: {}", city, Thread.currentThread().isVirtual());
+        log.info("Starting trip planning for {} on main thread. Is virtual: {}", city,
+                Thread.currentThread().isVirtual());
 
         // Uruchamiamy pobieranie danych równolegle w wirtualnych wątkach
         CompletableFuture<WeatherDto> weatherFuture = CompletableFuture.supplyAsync(
@@ -42,9 +43,10 @@ public class TripPlannerService {
                 () -> foursquareClient.getPlacesForCity(city), virtualThreadExecutor);
 
         try {
-            // Czekamy na zakończenie obu zadań (maksymalny czas oczekiwania to czas trwania najdłuższego z nich)
+            // Czekamy na zakończenie obu zadań (maksymalny czas oczekiwania to czas trwania
+            // najdłuższego z nich)
             CompletableFuture.allOf(weatherFuture, placesFuture).join();
-            
+
             WeatherDto weather = weatherFuture.get();
             List<PlaceDto> places = placesFuture.get();
 
