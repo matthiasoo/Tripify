@@ -1,5 +1,4 @@
 services:
-  # ── Backend (Spring Boot + Java 21) ────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -9,6 +8,8 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=default
+    env_file:
+      - ./backend/.env
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8081/swagger-ui/index.html || exit 1"]
       interval: 15s
@@ -17,17 +18,15 @@ services:
       start_period: 40s
     restart: unless-stopped
 
-  # ── Frontend (Next.js 16) ──────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8081
     container_name: tripify-frontend
     ports:
       - "3000:3000"
-    environment:
-      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
-      - UNSPLASH_ACCESS_KEY=${UNSPLASH_ACCESS_KEY:-}
     depends_on:
       backend:
         condition: service_started

@@ -1,7 +1,8 @@
-const API_BASE_URL = "/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
 
 async function request(path, params = {}) {
-  const url = new URL(`${API_BASE_URL}${path}`, window.location.origin);
+  const url = new URL(`${API_BASE_URL}${path}`);
 
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
@@ -21,17 +22,17 @@ async function request(path, params = {}) {
 
 export const weatherService = {
   getCurrent(query) {
-    return request("/weather", { ...query, type: "current" });
+    return request("/api/v1/weather", { ...query, type: "current" });
   },
 
   getForecast(query) {
-    return request("/weather", { ...query, type: "forecast" });
+    return request("/api/v1/weather", { ...query, type: "forecast" });
   },
 };
 
 export const cityImageService = {
   search({ city, page, perPage, orientation }) {
-    return request("/city-images", {
+    return request("/api/v1/city-images", {
       city,
       page,
       per_page: perPage,
