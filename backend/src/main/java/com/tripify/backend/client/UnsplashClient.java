@@ -16,7 +16,7 @@ public class UnsplashClient {
     private final String accessKey;
 
     public UnsplashClient(RestClient restClient,
-                          @Value("${api.unsplash.key}") String accessKey) {
+            @Value("${api.unsplash.key}") String accessKey) {
         this.restClient = restClient;
         this.accessKey = accessKey;
     }
@@ -27,7 +27,7 @@ public class UnsplashClient {
         try {
             return restClient.get()
                     .uri(BASE_URL + "/search/photos?query={query}&page={page}&per_page={perPage}" +
-                                    "&orientation={orientation}&content_filter=high&order_by=relevant",
+                            "&orientation={orientation}&content_filter=high&order_by=relevant",
                             city + " city", page, perPage, orientation)
                     .header("Authorization", "Client-ID " + accessKey)
                     .header("Accept-Version", "v1")

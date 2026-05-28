@@ -56,12 +56,7 @@ export default function CitySlider({ cities }) {
             <div className="flex items-center gap-4">
                 <button
                     onClick={prev}
-                    className="w-9 h-9 rounded-full border border-outline bg-panel text-primary
-                               flex items-center justify-center text-lg shadow-panel cursor-pointer
-                               transition-all duration-250 ease-out
-                               hover:bg-[var(--color-glow-gradient)] hover:border-[var(--color-glow)]
-                               hover:shadow-hover hover:scale-108
-                               active:scale-95"
+                    className="w-9 h-9 rounded-full border border-outline bg-panel text-primary flex items-center justify-center text-lg shadow-panel cursor-pointer transition-all duration-250 ease-out hover:bg-[var(--color-glow-gradient)] hover:border-[var(--color-glow)] hover:shadow-hover hover:scale-108 active:scale-95"
                     aria-label="Previous city"
                 >
                     <FiChevronLeft />
@@ -85,12 +80,7 @@ export default function CitySlider({ cities }) {
 
                 <button
                     onClick={next}
-                    className="w-9 h-9 rounded-full border border-outline bg-panel text-primary
-                               flex items-center justify-center text-lg shadow-panel cursor-pointer
-                               transition-all duration-250 ease-out
-                               hover:bg-[var(--color-glow-gradient)] hover:border-[var(--color-glow)]
-                               hover:shadow-hover hover:scale-108
-                               active:scale-95"
+                    className="w-9 h-9 rounded-full border border-outline bg-panel text-primary flex items-center justify-center text-lg shadow-panel cursor-pointer transition-all duration-250 ease-out hover:bg-[var(--color-glow-gradient)] hover:border-[var(--color-glow)] hover:shadow-hover hover:scale-108 active:scale-95"
                     aria-label="Next city"
                 >
                     <FiChevronRight />
