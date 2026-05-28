@@ -1,9 +1,10 @@
 package com.tripify.backend.controller;
 
 import com.tripify.backend.dto.AuthResponse;
+import com.tripify.backend.dto.ChangePasswordRequest;
 import com.tripify.backend.dto.LoginRequest;
 import com.tripify.backend.dto.RegisterRequest;
-import com.tripify.backend.dto.UserResponse;
+import com.tripify.backend.dto.UpdateProfileRequest;
 import com.tripify.backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,6 +54,33 @@ public class AuthController {
                 .orElseGet(this::unauthorized);
     }
 
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        String token = authService.extractBearerToken(authorization);
+        if (token == null) {
+            return unauthorized();
+        }
+
+        return ResponseEntity.ok(authService.updateProfile(token, request));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        String token = authService.extractBearerToken(authorization);
+        if (token == null) {
+            return unauthorized();
+        }
+
+        authService.changePassword(token, request);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         String token = authService.extractBearerToken(authorization);
@@ -64,6 +93,11 @@ public class AuthController {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(Map.of("error", exception.getMessage()));
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Map<String, String>> handleSecurity(SecurityException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", exception.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

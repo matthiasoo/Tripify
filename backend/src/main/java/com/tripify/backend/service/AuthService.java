@@ -1,8 +1,10 @@
 package com.tripify.backend.service;
 
 import com.tripify.backend.dto.AuthResponse;
+import com.tripify.backend.dto.ChangePasswordRequest;
 import com.tripify.backend.dto.LoginRequest;
 import com.tripify.backend.dto.RegisterRequest;
+import com.tripify.backend.dto.UpdateProfileRequest;
 import com.tripify.backend.dto.UserResponse;
 import com.tripify.backend.model.AppUser;
 import com.tripify.backend.model.AuthToken;
@@ -70,6 +72,42 @@ public class AuthService {
                 .filter(authToken -> !authToken.isExpired())
                 .map(AuthToken::getUser)
                 .map(this::toUserResponse);
+    }
+
+    public Optional<AppUser> findAppUserByToken(String token) {
+        return tokenRepository.findByToken(token)
+                .filter(authToken -> !authToken.isExpired())
+                .map(AuthToken::getUser);
+    }
+
+    @Transactional
+    public UserResponse updateProfile(String token, UpdateProfileRequest request) {
+        AppUser user = findAppUserByToken(token)
+                .orElseThrow(() -> new SecurityException("Unauthorized."));
+        String email = normalizeEmail(request.email());
+
+        userRepository.findByEmailIgnoreCase(email)
+                .filter(existingUser -> !existingUser.getId().equals(user.getId()))
+                .ifPresent(existingUser -> {
+                    throw new IllegalArgumentException("User with this email already exists.");
+                });
+
+        user.setName(request.name().trim());
+        user.setEmail(email);
+
+        return toUserResponse(user);
+    }
+
+    @Transactional
+    public void changePassword(String token, ChangePasswordRequest request) {
+        AppUser user = findAppUserByToken(token)
+                .orElseThrow(() -> new SecurityException("Unauthorized."));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
     }
 
     @Transactional

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiLogIn, FiLogOut, FiUserPlus, FiX } from "react-icons/fi";
+import Link from "next/link";
+import { FiLogIn, FiLogOut, FiUser, FiUserPlus, FiX } from "react-icons/fi";
 import { authService, setStoredToken } from "@/lib/api";
 
 const INITIAL_FORM = {
@@ -40,6 +41,17 @@ export default function AuthPanel() {
         loadSession();
         return () => {
             cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        function updateUser(event) {
+            setUser(event.detail);
+        }
+
+        window.addEventListener("tripify:user-updated", updateUser);
+        return () => {
+            window.removeEventListener("tripify:user-updated", updateUser);
         };
     }, []);
 
@@ -101,6 +113,7 @@ export default function AuthPanel() {
         } finally {
             setStoredToken(null);
             setUser(null);
+            window.dispatchEvent(new CustomEvent("tripify:user-updated", { detail: null }));
             setLoading(false);
         }
     }
@@ -121,6 +134,14 @@ export default function AuthPanel() {
                                 <p className="truncate text-sm font-semibold">{user.name}</p>
                                 <p className="truncate text-xs text-muted">{user.email}</p>
                             </div>
+                            <Link
+                                href="/account"
+                                className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-outline bg-main text-primary transition hover:border-[var(--color-glow)] hover:bg-[var(--color-glow-gradient)]"
+                                aria-label="Panel uzytkownika"
+                                title="Panel uzytkownika"
+                            >
+                                <FiUser />
+                            </Link>
                             <button
                                 type="button"
                                 onClick={logout}

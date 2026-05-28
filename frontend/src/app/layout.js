@@ -1,6 +1,7 @@
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/providers/providers.jsx';
+import AuthPanel from "@/components/AuthPanel/AuthPanel";
 
 const jakartaSans = Plus_Jakarta_Sans({
     variable: "--font-sans",
@@ -23,8 +24,9 @@ export default function RootLayout({ children }) {
             lang="en"
             suppressHydrationWarning
         >
-            <body className={`h-full flex flex-col items-center justify-center ${jakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+            <body className={`min-h-screen w-full ${jakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
                 <Providers>
+                    <AuthPanel />
                     {children}
                 </Providers>
             </body>

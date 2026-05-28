@@ -100,6 +100,22 @@ export const authService = {
     return request("/api/v1/auth/me", { auth: true });
   },
 
+  updateProfile(payload) {
+    return request("/api/v1/auth/profile", {
+      method: "PUT",
+      body: payload,
+      auth: true,
+    });
+  },
+
+  changePassword(payload) {
+    return request("/api/v1/auth/password", {
+      method: "PUT",
+      body: payload,
+      auth: true,
+    });
+  },
+
   logout() {
     return request("/api/v1/auth/logout", {
       method: "POST",
