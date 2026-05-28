@@ -39,3 +39,9 @@ export const cityImageService = {
     });
   },
 };
+
+export const tripService = {
+  planTrip(city) {
+    return request(`/trips/${encodeURIComponent(city)}`);
+  },
+};
