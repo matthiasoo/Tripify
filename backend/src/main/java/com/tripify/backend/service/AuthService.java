@@ -80,10 +80,14 @@ public class AuthService {
                 .map(AuthToken::getUser);
     }
 
+    public AppUser requireAppUserByToken(String token) {
+        return findAppUserByToken(token)
+                .orElseThrow(() -> new SecurityException("Unauthorized."));
+    }
+
     @Transactional
     public UserResponse updateProfile(String token, UpdateProfileRequest request) {
-        AppUser user = findAppUserByToken(token)
-                .orElseThrow(() -> new SecurityException("Unauthorized."));
+        AppUser user = requireAppUserByToken(token);
         String email = normalizeEmail(request.email());
 
         userRepository.findByEmailIgnoreCase(email)
@@ -100,8 +104,7 @@ public class AuthService {
 
     @Transactional
     public void changePassword(String token, ChangePasswordRequest request) {
-        AppUser user = findAppUserByToken(token)
-                .orElseThrow(() -> new SecurityException("Unauthorized."));
+        AppUser user = requireAppUserByToken(token);
 
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect.");

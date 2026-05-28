@@ -1,11 +1,20 @@
 package com.tripify.backend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tripify.backend.client.FoursquareClient;
 import com.tripify.backend.client.OpenWeatherClient;
 import com.tripify.backend.client.GeminiClient;
 import com.tripify.backend.dto.PlaceDto;
+import com.tripify.backend.dto.SaveTripPlanRequest;
+import com.tripify.backend.dto.SavedTripPlanResponse;
 import com.tripify.backend.dto.TripPlanResponse;
 import com.tripify.backend.dto.WeatherDto;
+import com.tripify.backend.model.AppUser;
+import com.tripify.backend.model.SavedTripPlan;
+import com.tripify.backend.repository.SavedTripPlanRepository;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,18 +32,24 @@ public class TripPlannerService {
     private final OpenWeatherClient openWeatherClient;
     private final FoursquareClient foursquareClient;
     private final GeminiClient geminiClient;
+    private final SavedTripPlanRepository savedTripPlanRepository;
+    private final ObjectMapper objectMapper;
     private final ExecutorService virtualThreadExecutor;
 
     public TripPlannerService(OpenWeatherClient openWeatherClient, 
                               FoursquareClient foursquareClient,
-                              GeminiClient geminiClient) {
+                              GeminiClient geminiClient,
+                              SavedTripPlanRepository savedTripPlanRepository,
+                              ObjectMapper objectMapper) {
         this.openWeatherClient = openWeatherClient;
         this.foursquareClient = foursquareClient;
         this.geminiClient = geminiClient;
+        this.savedTripPlanRepository = savedTripPlanRepository;
+        this.objectMapper = objectMapper;
         this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
-    public TripPlanResponse planTrip(String city) {
+    public TripPlanResponse planTrip(String city, AppUser user) {
         log.info("Starting trip planning for {} on main thread. Is virtual: {}", city,
                 Thread.currentThread().isVirtual());
 
@@ -66,6 +81,65 @@ public class TripPlannerService {
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error occurred while planning trip", e);
             throw new RuntimeException("Could not plan trip", e);
+        }
+    }
+
+    @Transactional
+    public SavedTripPlanResponse savePlan(AppUser user, SaveTripPlanRequest request) {
+        List<PlaceDto> places = request.places() == null ? List.of() : request.places();
+        SavedTripPlan savedTripPlan = savedTripPlanRepository.save(new SavedTripPlan(
+                user,
+                request.city(),
+                request.weather().temperature(),
+                request.weather().description(),
+                serializePlaces(places),
+                request.plan()
+        ));
+
+        return toSavedTripPlanResponse(savedTripPlan);
+    }
+
+    @Transactional
+    public void deleteSavedPlan(AppUser user, Long planId) {
+        if (!savedTripPlanRepository.existsByIdAndUser(planId, user)) {
+            throw new IllegalArgumentException("Nie znaleziono zapisanego planu podróży.");
+        }
+        savedTripPlanRepository.deleteById(planId);
+    }
+
+    public List<SavedTripPlanResponse> getSavedPlans(AppUser user) {
+        return savedTripPlanRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(this::toSavedTripPlanResponse)
+                .toList();
+    }
+
+    private SavedTripPlanResponse toSavedTripPlanResponse(SavedTripPlan savedTripPlan) {
+        return new SavedTripPlanResponse(
+                savedTripPlan.getId(),
+                savedTripPlan.getCity(),
+                new WeatherDto(savedTripPlan.getWeatherTemperature(), savedTripPlan.getWeatherDescription()),
+                deserializePlaces(savedTripPlan.getPlacesJson()),
+                savedTripPlan.getPlan(),
+                savedTripPlan.getCreatedAt()
+        );
+    }
+
+    private String serializePlaces(List<PlaceDto> places) {
+        try {
+            return objectMapper.writeValueAsString(places);
+        } catch (JsonProcessingException e) {
+            log.warn("Could not serialize trip places. Saving an empty list.", e);
+            return "[]";
+        }
+    }
+
+    private List<PlaceDto> deserializePlaces(String placesJson) {
+        try {
+            return objectMapper.readValue(placesJson, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
+            log.warn("Could not deserialize saved trip places.", e);
+            return List.of();
         }
     }
 

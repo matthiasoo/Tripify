@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiLock, FiSave, FiUser } from "react-icons/fi";
-import { authService, setStoredToken } from "@/lib/api";
+import { FiClock, FiLock, FiMapPin, FiSave, FiTrash2, FiUser } from "react-icons/fi";
+import { authService, setStoredToken, tripService } from "@/lib/api";
 
 const INITIAL_PROFILE = {
     name: "",
@@ -27,6 +27,9 @@ export default function UserAccountPanel() {
     const [passwordMessage, setPasswordMessage] = useState("");
     const [profileError, setProfileError] = useState("");
     const [passwordError, setPasswordError] = useState("");
+    const [savedPlans, setSavedPlans] = useState([]);
+    const [plansError, setPlansError] = useState("");
+    const [deletingPlanId, setDeletingPlanId] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -39,6 +42,17 @@ export default function UserAccountPanel() {
                         name: user.name,
                         email: user.email,
                     });
+                }
+
+                try {
+                    const plans = await tripService.getSavedPlans();
+                    if (!cancelled) {
+                        setSavedPlans(plans);
+                    }
+                } catch (error) {
+                    if (!cancelled) {
+                        setPlansError(error.message);
+                    }
                 }
             } catch {
                 setStoredToken(null);
@@ -55,6 +69,22 @@ export default function UserAccountPanel() {
             cancelled = true;
         };
     }, [router]);
+
+    useEffect(() => {
+        async function refreshPlans() {
+            try {
+                setPlansError("");
+                setSavedPlans(await tripService.getSavedPlans());
+            } catch (error) {
+                setPlansError(error.message);
+            }
+        }
+
+        window.addEventListener("tripify:trip-plan-saved", refreshPlans);
+        return () => {
+            window.removeEventListener("tripify:trip-plan-saved", refreshPlans);
+        };
+    }, []);
 
     useEffect(() => {
         function handleUserUpdate(event) {
@@ -126,6 +156,20 @@ export default function UserAccountPanel() {
         }
     }
 
+    async function deleteSavedPlan(planId) {
+        setDeletingPlanId(planId);
+        setPlansError("");
+
+        try {
+            await tripService.deleteSavedPlan(planId);
+            setSavedPlans((currentPlans) => currentPlans.filter((plan) => plan.id !== planId));
+        } catch (error) {
+            setPlansError(error.message);
+        } finally {
+            setDeletingPlanId(null);
+        }
+    }
+
     if (loading) {
         return (
             <section className="w-full max-w-3xl rounded-lg border border-outline bg-panel/85 p-6 shadow-panel">
@@ -143,10 +187,7 @@ export default function UserAccountPanel() {
                 </p>
             </div>
 
-            <form
-                onSubmit={submitProfile}
-                className="rounded-lg border border-outline bg-panel/85 p-5 shadow-panel"
-            >
+            <form onSubmit={submitProfile} className="rounded-lg border border-outline bg-panel/85 p-5 shadow-panel">
                 <div className="mb-5 flex items-center gap-3">
                     <div className="grid h-10 w-10 place-items-center rounded-md bg-main text-primary">
                         <FiUser />
@@ -207,10 +248,7 @@ export default function UserAccountPanel() {
                 </button>
             </form>
 
-            <form
-                onSubmit={submitPassword}
-                className="rounded-lg border border-outline bg-panel/85 p-5 shadow-panel"
-            >
+            <form onSubmit={submitPassword} className="rounded-lg border border-outline bg-panel/85 p-5 shadow-panel">
                 <div className="mb-5 flex items-center gap-3">
                     <div className="grid h-10 w-10 place-items-center rounded-md bg-main text-primary">
                         <FiLock />
@@ -286,6 +324,83 @@ export default function UserAccountPanel() {
                     {savingPassword ? "Zapisywanie..." : "Zmień hasło"}
                 </button>
             </form>
+
+            <section className="rounded-lg border border-outline bg-panel/85 p-5 shadow-panel">
+                <div className="mb-5 flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-md bg-main text-primary">
+                        <FiMapPin />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold">Zapisane plany podróży</h2>
+                        <p className="text-sm text-muted">Plany zapisane na stronie głównej.</p>
+                    </div>
+                </div>
+
+                {plansError && (
+                    <p className="mb-4 rounded-md border border-danger-outline bg-danger-panel px-3 py-2 text-sm text-danger">
+                        {plansError}
+                    </p>
+                )}
+
+                {savedPlans.length === 0 ? (
+                    <div className="rounded-md border border-outline bg-main px-4 py-6 text-center text-sm text-muted">
+                        Nie masz jeszcze zapisanych planów podróży.
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        {savedPlans.map((savedPlan) => (
+                            <article key={savedPlan.id} className="rounded-md border border-outline bg-main p-4">
+                                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold capitalize">{savedPlan.city}</h3>
+                                        <p className="mt-1 text-sm text-muted">
+                                            {Math.round(savedPlan.weather.temperature)}°C, {savedPlan.weather.description}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 text-xs text-muted">
+                                            <FiClock />
+                                            {new Date(savedPlan.createdAt).toLocaleString("pl-PL")}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => deleteSavedPlan(savedPlan.id)}
+                                            disabled={deletingPlanId === savedPlan.id}
+                                            className="grid h-9 w-9 place-items-center rounded-md border border-danger-outline bg-danger-panel text-danger transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+                                            aria-label="Usuń plan"
+                                            title="Usuń plan"
+                                        >
+                                            <FiTrash2 />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {savedPlan.places?.length > 0 && (
+                                    <div className="mb-3 flex flex-wrap gap-2">
+                                        {savedPlan.places.slice(0, 3).map((place) => (
+                                            <span
+                                                key={`${savedPlan.id}-${place.name}`}
+                                                className="rounded-md border border-outline bg-panel px-2 py-1 text-xs text-muted"
+                                            >
+                                                {place.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <details className="text-sm">
+                                    <summary className="cursor-pointer font-semibold text-primary">
+                                        Pokaż plan
+                                    </summary>
+                                    <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-md border border-outline bg-panel p-3 font-sans text-sm leading-relaxed text-muted">
+                                        {savedPlan.plan}
+                                    </pre>
+                                </details>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </section>
         </section>
     );
 }

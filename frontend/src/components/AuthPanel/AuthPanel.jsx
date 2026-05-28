@@ -93,6 +93,7 @@ export default function AuthPanel() {
 
             setStoredToken(response.token);
             setUser(response.user);
+            window.dispatchEvent(new CustomEvent("tripify:user-updated", { detail: response.user }));
             setForm(INITIAL_FORM);
             setIsOpen(false);
         } catch (error) {

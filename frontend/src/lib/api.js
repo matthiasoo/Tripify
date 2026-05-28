@@ -131,6 +131,25 @@ export const authService = {
 
 export const tripService = {
   planTrip(city) {
-    return request(`/api/v1/trips/plan/${encodeURIComponent(city)}`);
+    return request(`/api/v1/trips/plan/${encodeURIComponent(city)}`, { auth: true });
+  },
+
+  getSavedPlans() {
+    return request("/api/v1/trips/mine", { auth: true });
+  },
+
+  savePlan(plan) {
+    return request("/api/v1/trips/mine", {
+      method: "POST",
+      body: plan,
+      auth: true,
+    });
+  },
+
+  deleteSavedPlan(planId) {
+    return request(`/api/v1/trips/mine/${planId}`, {
+      method: "DELETE",
+      auth: true,
+    });
   },
 };
