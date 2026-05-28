@@ -1,4 +1,5 @@
 import CitySlider from "@/components/CitySlider/CitySlider";
+import AuthPanel from "@/components/AuthPanel/AuthPanel";
 
 const CITIES = ["Warsaw", "Porto", "Dubai", "Vienna", "New York"];
 
@@ -13,6 +14,7 @@ export default function Home() {
             </div>
 
             <CitySlider cities={CITIES} />
+            <AuthPanel />
         </div>
     );
 }
