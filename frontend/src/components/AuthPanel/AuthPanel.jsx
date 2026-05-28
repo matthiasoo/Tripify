@@ -124,7 +124,12 @@ export default function AuthPanel() {
         <>
             <header className="sticky top-0 z-40 w-full border-b border-outline bg-panel/90 px-4 py-3 shadow-panel backdrop-blur">
                 <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
-                    <span className="text-lg font-bold tracking-tight">Tripify</span>
+                    <Link
+                        href="/"
+                        className="text-lg font-bold tracking-tight transition hover:text-muted"
+                    >
+                        Tripify
+                    </Link>
 
                     {checkingSession ? (
                         <div className="h-10 w-36 animate-pulse rounded-md bg-[var(--color-glow-gradient)]" />
