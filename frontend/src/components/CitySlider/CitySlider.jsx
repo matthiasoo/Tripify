@@ -6,7 +6,7 @@ import WeatherCard from "@/components/WeatherCard/WeatherCard";
 
 const AUTO_SCROLL_INTERVAL = 5000;
 
-export default function CitySlider({ cities }) {
+export default function CitySlider({ cities, onSelectCity }) {
     const [current, setCurrent] = useState(0);
     const [paused, setPaused] = useState(false);
     const timeoutRef = useRef(null);
@@ -42,9 +42,10 @@ export default function CitySlider({ cities }) {
                 {cities.map((city, i) => (
                     <div
                         key={city}
+                        onClick={() => onSelectCity && onSelectCity(city)}
                         className={`absolute inset-0 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
                                     ${i === current
-                                        ? "opacity-100 scale-100 pointer-events-auto"
+                                        ? "opacity-100 scale-100 pointer-events-auto cursor-pointer"
                                         : "opacity-0 scale-95 pointer-events-none"
                                     }`}
                     >

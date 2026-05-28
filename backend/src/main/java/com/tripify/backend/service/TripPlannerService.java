@@ -2,10 +2,10 @@ package com.tripify.backend.service;
 
 import com.tripify.backend.client.FoursquareClient;
 import com.tripify.backend.client.OpenWeatherClient;
+import com.tripify.backend.client.GeminiClient;
 import com.tripify.backend.dto.PlaceDto;
 import com.tripify.backend.dto.TripPlanResponse;
 import com.tripify.backend.dto.WeatherDto;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,12 +22,15 @@ public class TripPlannerService {
 
     private final OpenWeatherClient openWeatherClient;
     private final FoursquareClient foursquareClient;
+    private final GeminiClient geminiClient;
     private final ExecutorService virtualThreadExecutor;
 
-    public TripPlannerService(OpenWeatherClient openWeatherClient, FoursquareClient foursquareClient) {
+    public TripPlannerService(OpenWeatherClient openWeatherClient, 
+                              FoursquareClient foursquareClient,
+                              GeminiClient geminiClient) {
         this.openWeatherClient = openWeatherClient;
         this.foursquareClient = foursquareClient;
-        // Tworzymy Executor oparty na Virtual Threads z JDK 21
+        this.geminiClient = geminiClient;
         this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
@@ -35,7 +38,6 @@ public class TripPlannerService {
         log.info("Starting trip planning for {} on main thread. Is virtual: {}", city,
                 Thread.currentThread().isVirtual());
 
-        // Uruchamiamy pobieranie danych równolegle w wirtualnych wątkach
         CompletableFuture<WeatherDto> weatherFuture = CompletableFuture.supplyAsync(
                 () -> openWeatherClient.getWeatherForCity(city), virtualThreadExecutor);
 
@@ -50,10 +52,84 @@ public class TripPlannerService {
             WeatherDto weather = weatherFuture.get();
             List<PlaceDto> places = placesFuture.get();
 
-            return new TripPlanResponse(city, weather, places);
+            List<String> placesInfo = places.stream()
+                    .map(p -> String.format("- %s (%s) pod adresem %s", p.name(), p.category(), p.address()))
+                    .toList();
+
+            String plan = geminiClient.generatePlan(city, weather.temperature(), weather.description(), placesInfo);
+
+            if (plan == null || plan.isBlank()) {
+                plan = generateLocalFallbackPlan(city, weather.temperature(), weather.description(), places);
+            }
+
+            return new TripPlanResponse(city, weather, places, plan);
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error occurred while planning trip", e);
             throw new RuntimeException("Could not plan trip", e);
         }
+    }
+
+    private String generateLocalFallbackPlan(String city, double temp, String weatherDesc, List<PlaceDto> places) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("# 📍 Spersonalizowany Plan Podróży: %s\n\n", city));
+        sb.append(String.format("### 🌤️ Aktualna Pogoda w Mieście\n- **Temperatura:** %.1f°C\n- **Warunki:** %s\n\n", temp, weatherDesc));
+
+        sb.append("### 🧥 Sugestia Ubioru & Przygotowania\n");
+        if (temp < 10) {
+            sb.append("- Jest dość chłodno. Zalecamy ubranie się ciepło na cebulkę (ciepła kurtka, czapka, szalik). Warto wziąć ze sobą termos z ciepłym napojem.\n");
+        } else if (temp >= 10 && temp < 20) {
+            sb.append("- Temperatura jest umiarkowana. Lekka kurtka przejściowa, softshell lub cieplejszy sweter będą idealnym wyborem.\n");
+        } else {
+            sb.append("- Pogoda sprzyja lekkiemu ubiorowi! Pamiętaj o nakryciu głowy, okularach przeciwsłonecznych, filtrze UV oraz zabraniu dużej ilości wody.\n");
+        }
+
+        String lowerDesc = weatherDesc.toLowerCase();
+        if (lowerDesc.contains("rain") || lowerDesc.contains("drizzle") || lowerDesc.contains("shower") || lowerDesc.contains("storm") || lowerDesc.contains("deszcz")) {
+            sb.append("- **Uwaga:** Zapowiadane są opady deszczu. Koniecznie zabierz ze sobą parasol lub kurtkę przeciwdeszczową. Warto skupić się na atrakcjach wewnątrz budynków.\n");
+        } else {
+            sb.append("- Brak prognozowanego deszczu. Pogoda jest doskonała do spacerów na świeżym powietrzu i zwiedzania miejskich zakątków.\n");
+        }
+        sb.append("\n");
+
+        sb.append("### 🗺️ Propozycja Harmonogramu Dnia\n\n");
+        
+        if (places == null || places.isEmpty()) {
+            sb.append("#### 🌅 Rano (09:00 - 12:00)\n- Rozpocznij dzień od wizyty w przytulnej lokalnej kawiarni w ścisłym centrum miasta. Zamów tradycyjne śniadanie i zaplanuj spacer.\n");
+            sb.append("\n#### ☀️ Popołudnie (13:00 - 17:00)\n- Udaj się na relaksujący spacer wokół historycznego rynku lub głównego deptaka miejskiego. Spędź czas na robieniu zdjęć i podziwianiu architektury.\n");
+            sb.append("\n#### 🌆 Wieczór (18:00 - 21:00)\n- Zjedz pyszną kolację w wysoko ocenianej restauracji serwującej lokalne specjały kulinarne. Spróbuj tradycyjnych dań i zrelaksuj się po całym dniu.\n");
+        } else {
+            int count = places.size();
+            PlaceDto first = places.get(0);
+            PlaceDto second = count > 1 ? places.get(1) : null;
+            PlaceDto third = count > 2 ? places.get(2) : null;
+
+            sb.append(String.format("#### 🌅 Rano (09:00 - 12:00)\n- **Wizyta w: %s** (Kategoria: *%s*)\n  - *Adres:* %s\n", first.name(), first.category(), first.address()));
+            if (lowerDesc.contains("rain") || lowerDesc.contains("deszcz")) {
+                sb.append("  - *Wskazówka:* Z uwagi na deszcz, zacznij od tej lokalizacji. Jeśli to otwarta przestrzeń, upewnij się, że masz parasol.\n");
+            } else {
+                sb.append("  - *Wskazówka:* Doskonałe miejsce na rozpoczęcie dnia, kiedy rano jest najmniej turystów.\n");
+            }
+
+            if (second != null) {
+                sb.append(String.format("\n#### ☀️ Popołudnie (13:00 - 17:00)\n- **Wizyta w: %s** (Kategoria: *%s*)\n  - *Adres:* %s\n", second.name(), second.category(), second.address()));
+                if (lowerDesc.contains("rain") || lowerDesc.contains("deszcz")) {
+                    sb.append("  - *Wskazówka:* Po zwiedzaniu, zrób przerwę na obiad w zadaszonej restauracji w bliskiej odległości.\n");
+                } else {
+                    sb.append("  - *Wskazówka:* Poświęć ten czas na spacer w okolicy i skosztowanie lokalnego street foodu.\n");
+                }
+            } else {
+                sb.append("\n#### ☀️ Popołudnie (13:00 - 17:00)\n- Czas na smaczny lunch w klimatycznej knajpce w centrum i dalsze odkrywanie sekretnych zaułków miasta.\n");
+            }
+
+            if (third != null) {
+                sb.append(String.format("\n#### 🌆 Wieczór (18:00 - 21:00)\n- **Wizyta w: %s** (Kategoria: *%s*)\n  - *Adres:* %s\n", third.name(), third.category(), third.address()));
+                sb.append("  - *Wskazówka:* Wspaniałe zwieńczenie dnia. Podziwiaj miasto w wieczornych barwach i zrób pamiątkowe zdjęcia przed powrotem do hotelu.\n");
+            } else {
+                sb.append("\n#### 🌆 Wieczór (18:00 - 21:00)\n- Udaj się do lokalnego baru lub kawiarni z muzyką na żywo, zrelaksuj się przy napoju i podsumuj dzień pełen wrażeń.\n");
+            }
+        }
+
+        sb.append("\n---\n*Wskazówka: Powyższy plan został skomponowany automatycznie na podstawie aktualnych odczytów pogodowych i najpopularniejszych atrakcji Foursquare dla Twojego bezpieczeństwa i wygody.*");
+        return sb.toString();
     }
 }
