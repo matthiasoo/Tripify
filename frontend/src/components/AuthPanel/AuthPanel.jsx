@@ -137,8 +137,8 @@ export default function AuthPanel() {
                             <Link
                                 href="/account"
                                 className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-outline bg-main text-primary transition hover:border-[var(--color-glow)] hover:bg-[var(--color-glow-gradient)]"
-                                aria-label="Panel uzytkownika"
-                                title="Panel uzytkownika"
+                                aria-label="Panel użytkownika"
+                                title="Panel użytkownika"
                             >
                                 <FiUser />
                             </Link>
@@ -226,7 +226,7 @@ export default function AuthPanel() {
                         <form onSubmit={submit} className="flex flex-col gap-3">
                             {isRegister && (
                                 <label className="flex flex-col gap-1 text-sm font-medium">
-                                    Imie
+                                    Imię
                                     <input
                                         name="name"
                                         value={form.name}
@@ -254,7 +254,7 @@ export default function AuthPanel() {
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm font-medium">
-                                Haslo
+                                Hasło
                                 <input
                                     name="password"
                                     type="password"
@@ -279,7 +279,7 @@ export default function AuthPanel() {
                                 className="mt-1 flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 font-semibold text-main transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {isRegister ? <FiUserPlus /> : <FiLogIn />}
-                                {loading ? "Przetwarzanie..." : isRegister ? "Utworz konto" : "Zaloguj"}
+                                {loading ? "Przetwarzanie..." : isRegister ? "Utwórz konto" : "Zaloguj"}
                             </button>
                         </form>
                     </section>

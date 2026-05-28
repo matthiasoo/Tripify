@@ -137,9 +137,9 @@ export default function UserAccountPanel() {
     return (
         <section className="grid w-full max-w-3xl gap-6 text-left">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Panel uzytkownika</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Panel użytkownika</h1>
                 <p className="mt-2 text-sm text-muted">
-                    Zarzadzaj danymi konta, adresem email i haslem.
+                    Zarządzaj danymi konta, adresem email i hasłem.
                 </p>
             </div>
 
@@ -153,13 +153,13 @@ export default function UserAccountPanel() {
                     </div>
                     <div>
                         <h2 className="text-xl font-bold">Dane konta</h2>
-                        <p className="text-sm text-muted">Zmien nazwe uzytkownika i email.</p>
+                        <p className="text-sm text-muted">Zmień nazwę użytkownika i email.</p>
                     </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                     <label className="flex flex-col gap-1 text-sm font-medium">
-                        Imie
+                        Imię
                         <input
                             name="name"
                             value={profile.name}
@@ -216,14 +216,14 @@ export default function UserAccountPanel() {
                         <FiLock />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold">Zmiana hasla</h2>
-                        <p className="text-sm text-muted">Podaj obecne haslo i ustaw nowe.</p>
+                        <h2 className="text-xl font-bold">Zmiana hasła</h2>
+                        <p className="text-sm text-muted">Podaj obecne hasło i ustaw nowe.</p>
                     </div>
                 </div>
 
                 <div className="grid gap-4">
                     <label className="flex flex-col gap-1 text-sm font-medium">
-                        Obecne haslo
+                        Obecne hasło
                         <input
                             name="currentPassword"
                             type="password"
@@ -237,7 +237,7 @@ export default function UserAccountPanel() {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <label className="flex flex-col gap-1 text-sm font-medium">
-                            Nowe haslo
+                            Nowe hasło
                             <input
                                 name="newPassword"
                                 type="password"
@@ -251,7 +251,7 @@ export default function UserAccountPanel() {
                         </label>
 
                         <label className="flex flex-col gap-1 text-sm font-medium">
-                            Powtorz nowe haslo
+                            Powtórz nowe hasło
                             <input
                                 name="repeatPassword"
                                 type="password"
@@ -283,7 +283,7 @@ export default function UserAccountPanel() {
                     className="mt-5 flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 font-semibold text-main transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     <FiSave />
-                    {savingPassword ? "Zapisywanie..." : "Zmien haslo"}
+                    {savingPassword ? "Zapisywanie..." : "Zmień hasło"}
                 </button>
             </form>
         </section>
