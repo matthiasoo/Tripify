@@ -49,7 +49,12 @@ async function request(path, { params = {}, method = "GET", body, auth = false }
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const data = response.status === 204 ? null : await response.json();
+  const contentType = response.headers.get("content-type") || "";
+  const data = response.status === 204
+    ? null
+    : contentType.includes("application/json")
+      ? await response.json()
+      : { error: await response.text() };
 
   if (!response.ok) {
     throw new Error(data?.error || `Request failed (${response.status})`);
@@ -126,6 +131,6 @@ export const authService = {
 
 export const tripService = {
   planTrip(city) {
-    return request(`/trips/${encodeURIComponent(city)}`);
+    return request(`/api/v1/trips/plan/${encodeURIComponent(city)}`);
   },
 };

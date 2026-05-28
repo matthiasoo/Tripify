@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
 
     if (!response.ok) {
       return Response.json(
-        { error: data.message || "Failed to fetch trip plan from backend" },
+        { error: data.error || data.message || "Failed to fetch trip plan from backend" },
         { status: response.status }
       );
     }
