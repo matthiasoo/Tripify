@@ -3,9 +3,9 @@ package com.tripify.backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tripify.backend.client.FoursquareClient;
+
 import com.tripify.backend.client.OpenWeatherClient;
-import com.tripify.backend.client.GeminiClient;
+import org.springframework.web.client.RestClient;
 import com.tripify.backend.dto.PlaceDto;
 import com.tripify.backend.dto.SaveTripPlanRequest;
 import com.tripify.backend.dto.SavedTripPlanResponse;
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -30,20 +31,17 @@ public class TripPlannerService {
     private static final Logger log = LoggerFactory.getLogger(TripPlannerService.class);
 
     private final OpenWeatherClient openWeatherClient;
-    private final FoursquareClient foursquareClient;
-    private final GeminiClient geminiClient;
+    private final RestClient aiServiceClient;
     private final SavedTripPlanRepository savedTripPlanRepository;
     private final ObjectMapper objectMapper;
     private final ExecutorService virtualThreadExecutor;
 
     public TripPlannerService(OpenWeatherClient openWeatherClient, 
-                              FoursquareClient foursquareClient,
-                              GeminiClient geminiClient,
+                              RestClient.Builder restClientBuilder,
                               SavedTripPlanRepository savedTripPlanRepository,
                               ObjectMapper objectMapper) {
         this.openWeatherClient = openWeatherClient;
-        this.foursquareClient = foursquareClient;
-        this.geminiClient = geminiClient;
+        this.aiServiceClient = restClientBuilder.baseUrl("http://ai-service").build();
         this.savedTripPlanRepository = savedTripPlanRepository;
         this.objectMapper = objectMapper;
         this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
@@ -56,22 +54,33 @@ public class TripPlannerService {
         CompletableFuture<WeatherDto> weatherFuture = CompletableFuture.supplyAsync(
                 () -> openWeatherClient.getWeatherForCity(city), virtualThreadExecutor);
 
-        CompletableFuture<List<PlaceDto>> placesFuture = CompletableFuture.supplyAsync(
-                () -> foursquareClient.getPlacesForCity(city), virtualThreadExecutor);
-
         try {
-            // Czekamy na zakończenie obu zadań (maksymalny czas oczekiwania to czas trwania
-            // najdłuższego z nich)
-            CompletableFuture.allOf(weatherFuture, placesFuture).join();
+            weatherFuture.join();
 
             WeatherDto weather = weatherFuture.get();
-            List<PlaceDto> places = placesFuture.get();
+            List<PlaceDto> places = List.of();
 
-            List<String> placesInfo = places.stream()
-                    .map(p -> String.format("- %s (%s) pod adresem %s", p.name(), p.category(), p.address()))
-                    .toList();
+            List<String> placesInfo = List.of();
 
-            String plan = geminiClient.generatePlan(city, days, pace, weather.temperature(), weather.description(), placesInfo);
+            Map<String, Object> requestBody = Map.of(
+                    "city", city,
+                    "days", days,
+                    "pace", pace,
+                    "temperature", weather.temperature(),
+                    "weatherDescription", weather.description(),
+                    "placesInfo", placesInfo
+            );
+
+            String plan = null;
+            try {
+                plan = aiServiceClient.post()
+                        .uri("/api/v1/ai/generate-plan")
+                        .body(requestBody)
+                        .retrieve()
+                        .body(String.class);
+            } catch (Exception e) {
+                log.warn("Could not reach ai-service", e);
+            }
 
             if (plan == null || plan.isBlank()) {
                 plan = generateLocalFallbackPlan(city, days, pace, weather.temperature(), weather.description(), places);

@@ -1,8 +1,8 @@
 package com.tripify.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tripify.backend.client.FoursquareClient;
-import com.tripify.backend.client.GeminiClient;
+
+import org.springframework.web.client.RestClient;
 import com.tripify.backend.client.OpenWeatherClient;
 import com.tripify.backend.dto.*;
 import com.tripify.backend.model.AppUser;
@@ -27,11 +27,17 @@ class TripPlannerServiceTest {
     @Mock
     private OpenWeatherClient openWeatherClient;
 
-    @Mock
-    private FoursquareClient foursquareClient;
 
     @Mock
-    private GeminiClient geminiClient;
+    private RestClient.Builder restClientBuilder;
+    @Mock
+    private RestClient restClient;
+    @Mock
+    private RestClient.RequestBodyUriSpec requestBodyUriSpec;
+    @Mock
+    private RestClient.RequestBodySpec requestBodySpec;
+    @Mock
+    private RestClient.ResponseSpec responseSpec;
 
     @Mock
     private SavedTripPlanRepository savedTripPlanRepository;
@@ -42,10 +48,12 @@ class TripPlannerServiceTest {
 
     @BeforeEach
     void setUp() {
+        when(restClientBuilder.baseUrl(anyString())).thenReturn(restClientBuilder);
+        when(restClientBuilder.build()).thenReturn(restClient);
+
         tripPlannerService = new TripPlannerService(
                 openWeatherClient,
-                foursquareClient,
-                geminiClient,
+                restClientBuilder,
                 savedTripPlanRepository,
                 objectMapper
         );
@@ -67,9 +75,12 @@ class TripPlannerServiceTest {
         String mockPlan = "# Spersonalizowany Plan";
 
         when(openWeatherClient.getWeatherForCity(city)).thenReturn(mockWeather);
-        when(foursquareClient.getPlacesForCity(city)).thenReturn(mockPlaces);
-        when(geminiClient.generatePlan(eq(city), eq(days), eq(pace), eq(25.0), eq("Sunny"), anyList()))
-                .thenReturn(mockPlan);
+
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(String.class)).thenReturn(mockPlan);
 
         // Act
         TripPlanResponse response = tripPlannerService.planTrip(city, days, pace, user);
@@ -95,10 +106,8 @@ class TripPlannerServiceTest {
         List<PlaceDto> mockPlaces = List.of(new PlaceDto("Colosseum", "History", "Piazza del Colosseo"));
 
         when(openWeatherClient.getWeatherForCity(city)).thenReturn(mockWeather);
-        when(foursquareClient.getPlacesForCity(city)).thenReturn(mockPlaces);
-        // Gemini fails by returning null or blank plan
-        when(geminiClient.generatePlan(anyString(), anyInt(), anyString(), anyDouble(), anyString(), anyList()))
-                .thenReturn("");
+        
+        when(restClient.post()).thenThrow(new RuntimeException("Service unavailable"));
 
         // Act
         TripPlanResponse response = tripPlannerService.planTrip(city, days, pace, user);

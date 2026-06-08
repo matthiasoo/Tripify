@@ -1,5 +1,31 @@
 services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: tripify-eureka
+    ports:
+      - "8761:8761"
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: tripify-ai-service
+    ports:
+      - "8082:8082"
+    environment:
+      - GROQ_API_KEY=${API_GROQ_KEY}
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - eureka-server
+    restart: unless-stopped
+
   backend:
+    depends_on:
+      - eureka-server
     build:
       context: ./backend
       dockerfile: Dockerfile

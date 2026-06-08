@@ -1,8 +1,9 @@
-package com.tripify.backend.client;
+package com.tripify.ai.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -10,26 +11,29 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class GeminiClient {
-    private static final Logger log = LoggerFactory.getLogger(GeminiClient.class);
+public class GroqClient {
+    private static final Logger log = LoggerFactory.getLogger(GroqClient.class);
 
     private final RestClient restClient;
     private final String apiUrl;
     private final String apiKey;
+    private final String model;
 
-    public GeminiClient(
+    public GroqClient(
             RestClient restClient,
-            @Value("${api.gemini.url}") String apiUrl,
-            @Value("${api.gemini.key}") String apiKey
+            @Value("${api.groq.url}") String apiUrl,
+            @Value("${api.groq.key}") String apiKey,
+            @Value("${api.groq.model}") String model
     ) {
         this.restClient = restClient;
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
+        this.model = model;
     }
 
     public String generatePlan(String city, int days, String pace, double temp, String weatherDesc, List<String> placesInfo) {
         if (apiKey == null || apiKey.isBlank() || apiKey.equals("dummy-key")) {
-            log.warn("Gemini API key is not configured. Falling back to local rules-based planner.");
+            log.warn("Groq API key is not configured. Falling back to local rules-based planner.");
             return null;
         }
 
@@ -58,42 +62,34 @@ public class GeminiClient {
             );
 
             Map<String, Object> requestBody = Map.of(
-                    "contents", List.of(
-                            Map.of("parts", List.of(Map.of("text", prompt)))
+                    "model", model,
+                    "messages", List.of(
+                            Map.of("role", "user", "content", prompt)
                     )
             );
 
-            GeminiResponse response = restClient.post()
-                    .uri(apiUrl + "?key={key}", apiKey)
+            GroqResponse response = restClient.post()
+                    .uri(apiUrl)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                     .body(requestBody)
                     .retrieve()
-                    .body(GeminiResponse.class);
+                    .body(GroqResponse.class);
 
-            if (response != null && response.candidates() != null && !response.candidates().isEmpty()) {
-                Candidate candidate = response.candidates().getFirst();
-                if (candidate.content() != null
-                        && candidate.content().parts() != null
-                        && !candidate.content().parts().isEmpty()) {
-                    return candidate.content().parts().getFirst().text();
+            if (response != null && response.choices() != null && !response.choices().isEmpty()) {
+                Message message = response.choices().getFirst().message();
+                if (message != null && message.content() != null) {
+                    return message.content();
                 }
             }
 
             return null;
         } catch (Exception e) {
-            log.error("Error calling Gemini API, falling back to local planner", e);
+            log.error("Error calling Groq API, falling back to local planner", e);
             return null;
         }
     }
 
-    public record GeminiResponse(List<Candidate> candidates) {
-    }
-
-    public record Candidate(Content content) {
-    }
-
-    public record Content(List<Part> parts) {
-    }
-
-    public record Part(String text) {
-    }
+    public record GroqResponse(List<Choice> choices) {}
+    public record Choice(Message message) {}
+    public record Message(String content) {}
 }
