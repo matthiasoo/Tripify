@@ -49,8 +49,8 @@ public class TripPlannerService {
         this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
-    public TripPlanResponse planTrip(String city, AppUser user) {
-        log.info("Starting trip planning for {} on main thread. Is virtual: {}", city,
+    public TripPlanResponse planTrip(String city, int days, String pace, AppUser user) {
+        log.info("Starting trip planning for {} days (pace: {}) in {} on main thread. Is virtual: {}", days, pace, city,
                 Thread.currentThread().isVirtual());
 
         CompletableFuture<WeatherDto> weatherFuture = CompletableFuture.supplyAsync(
@@ -71,10 +71,10 @@ public class TripPlannerService {
                     .map(p -> String.format("- %s (%s) pod adresem %s", p.name(), p.category(), p.address()))
                     .toList();
 
-            String plan = geminiClient.generatePlan(city, weather.temperature(), weather.description(), placesInfo);
+            String plan = geminiClient.generatePlan(city, days, pace, weather.temperature(), weather.description(), placesInfo);
 
             if (plan == null || plan.isBlank()) {
-                plan = generateLocalFallbackPlan(city, weather.temperature(), weather.description(), places);
+                plan = generateLocalFallbackPlan(city, days, pace, weather.temperature(), weather.description(), places);
             }
 
             return new TripPlanResponse(city, weather, places, plan);
@@ -143,9 +143,12 @@ public class TripPlannerService {
         }
     }
 
-    private String generateLocalFallbackPlan(String city, double temp, String weatherDesc, List<PlaceDto> places) {
+    private String generateLocalFallbackPlan(String city, int days, String pace, double temp, String weatherDesc, List<PlaceDto> places) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("# 📍 Spersonalizowany Plan Podróży: %s\n\n", city));
+        boolean isIntense = "intense".equalsIgnoreCase(pace) || "intensywny".equalsIgnoreCase(pace);
+        
+        sb.append(String.format("# 📍 Spersonalizowany Plan Podróży: %s (%d dni, tempo: %s)\n\n", 
+                city, days, isIntense ? "Intensywne" : "Luźne"));
         sb.append(String.format("### 🌤️ Aktualna Pogoda w Mieście\n- **Temperatura:** %.1f°C\n- **Warunki:** %s\n\n", temp, weatherDesc));
 
         sb.append("### 🧥 Sugestia Ubioru & Przygotowania\n");
@@ -165,45 +168,49 @@ public class TripPlannerService {
         }
         sb.append("\n");
 
-        sb.append("### 🗺️ Propozycja Harmonogramu Dnia\n\n");
-        
-        if (places == null || places.isEmpty()) {
-            sb.append("#### 🌅 Rano (09:00 - 12:00)\n- Rozpocznij dzień od wizyty w przytulnej lokalnej kawiarni w ścisłym centrum miasta. Zamów tradycyjne śniadanie i zaplanuj spacer.\n");
-            sb.append("\n#### ☀️ Popołudnie (13:00 - 17:00)\n- Udaj się na relaksujący spacer wokół historycznego rynku lub głównego deptaka miejskiego. Spędź czas na robieniu zdjęć i podziwianiu architektury.\n");
-            sb.append("\n#### 🌆 Wieczór (18:00 - 21:00)\n- Zjedz pyszną kolację w wysoko ocenianej restauracji serwującej lokalne specjały kulinarne. Spróbuj tradycyjnych dań i zrelaksuj się po całym dniu.\n");
-        } else {
-            int count = places.size();
-            PlaceDto first = places.get(0);
-            PlaceDto second = count > 1 ? places.get(1) : null;
-            PlaceDto third = count > 2 ? places.get(2) : null;
-
-            sb.append(String.format("#### 🌅 Rano (09:00 - 12:00)\n- **Wizyta w: %s** (Kategoria: *%s*)\n  - *Adres:* %s\n", first.name(), first.category(), first.address()));
-            if (lowerDesc.contains("rain") || lowerDesc.contains("deszcz")) {
-                sb.append("  - *Wskazówka:* Z uwagi na deszcz, zacznij od tej lokalizacji. Jeśli to otwarta przestrzeń, upewnij się, że masz parasol.\n");
+        for (int d = 1; d <= days; d++) {
+            sb.append(String.format("## 📅 Dzień %d\n\n", d));
+            
+            // Podział atrakcji z Foursquare (jeśli są dostępne) na poszczególne dni
+            int placeIndex = (d - 1) * (isIntense ? 2 : 1);
+            
+            sb.append("### 🌅 Rano\n");
+            if (places != null && placeIndex < places.size()) {
+                PlaceDto p = places.get(placeIndex);
+                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - *Adres:* %s\n", p.name(), p.category(), p.address()));
             } else {
-                sb.append("  - *Wskazówka:* Doskonałe miejsce na rozpoczęcie dnia, kiedy rano jest najmniej turystów.\n");
+                sb.append("- Spacer po zabytkowym centrum miasta i śniadanie w przytulnej kawiarni.\n");
             }
+            if (isIntense) {
+                sb.append("- Szybkie zwiedzanie pobliskiego punktu widokowego lub galerii sztuki.\n");
+            }
+            sb.append("\n");
 
-            if (second != null) {
-                sb.append(String.format("\n#### ☀️ Popołudnie (13:00 - 17:00)\n- **Wizyta w: %s** (Kategoria: *%s*)\n  - *Adres:* %s\n", second.name(), second.category(), second.address()));
-                if (lowerDesc.contains("rain") || lowerDesc.contains("deszcz")) {
-                    sb.append("  - *Wskazówka:* Po zwiedzaniu, zrób przerwę na obiad w zadaszonej restauracji w bliskiej odległości.\n");
-                } else {
-                    sb.append("  - *Wskazówka:* Poświęć ten czas na spacer w okolicy i skosztowanie lokalnego street foodu.\n");
-                }
+            sb.append("### ☀️ Popołudnie\n");
+            int secondPlaceIndex = placeIndex + 1;
+            if (places != null && !isIntense && secondPlaceIndex < places.size()) {
+                PlaceDto p = places.get(secondPlaceIndex);
+                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - *Adres:* %s\n", p.name(), p.category(), p.address()));
+            } else if (places != null && isIntense && secondPlaceIndex < places.size()) {
+                PlaceDto p = places.get(secondPlaceIndex);
+                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - *Adres:* %s\n", p.name(), p.category(), p.address()));
+                sb.append("- Krótki odpoczynek na lunch w tradycyjnej restauracji.\n");
             } else {
-                sb.append("\n#### ☀️ Popołudnie (13:00 - 17:00)\n- Czas na smaczny lunch w klimatycznej knajpce w centrum i dalsze odkrywanie sekretnych zaułków miasta.\n");
+                sb.append("- Tradycyjny lunch i relaks w parku miejskim lub spacer wzdłuż głównych ulic handlowych.\n");
             }
+            sb.append("\n");
 
-            if (third != null) {
-                sb.append(String.format("\n#### 🌆 Wieczór (18:00 - 21:00)\n- **Wizyta w: %s** (Kategoria: *%s*)\n  - *Adres:* %s\n", third.name(), third.category(), third.address()));
-                sb.append("  - *Wskazówka:* Wspaniałe zwieńczenie dnia. Podziwiaj miasto w wieczornych barwach i zrób pamiątkowe zdjęcia przed powrotem do hotelu.\n");
+            sb.append("### 🌆 Wieczór\n");
+            sb.append("- Kolacja w wysoko ocenianej restauracji serwującej lokalne specjały kulinarne.\n");
+            if (isIntense) {
+                sb.append("- Nocny spacer po rozświetlonym mieście lub wizyta w teatrze/lokalnym klubie z muzyką na żywo.\n");
             } else {
-                sb.append("\n#### 🌆 Wieczór (18:00 - 21:00)\n- Udaj się do lokalnego baru lub kawiarni z muzyką na żywo, zrelaksuj się przy napoju i podsumuj dzień pełen wrażeń.\n");
+                sb.append("- Relaks przy filiżance herbaty lub kieliszku wina w spokojnej atmosferze.\n");
             }
+            sb.append("\n");
         }
 
-        sb.append("\n---\n*Wskazówka: Powyższy plan został skomponowany automatycznie na podstawie aktualnych odczytów pogodowych i najpopularniejszych atrakcji Foursquare dla Twojego bezpieczeństwa i wygody.*");
+        sb.append("---\n*Wskazówka: Powyższy plan został skomponowany automatycznie jako awaryjny plan lokalny.*");
         return sb.toString();
     }
 }

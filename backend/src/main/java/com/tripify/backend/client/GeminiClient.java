@@ -27,27 +27,34 @@ public class GeminiClient {
         this.apiKey = apiKey;
     }
 
-    public String generatePlan(String city, double temp, String weatherDesc, List<String> placesInfo) {
+    public String generatePlan(String city, int days, String pace, double temp, String weatherDesc, List<String> placesInfo) {
         if (apiKey == null || apiKey.isBlank() || apiKey.equals("dummy-key")) {
             log.warn("Gemini API key is not configured. Falling back to local rules-based planner.");
             return null;
         }
 
         try {
+            String translatedPace = "relaxed".equalsIgnoreCase(pace) || "luzny".equalsIgnoreCase(pace) ? "luźne/spokojne" : "intensywne/aktywne";
             String prompt = String.format(
                     "Jesteś profesjonalnym agentem AI wspierającym planowanie podróży. " +
-                            "Stwórz spersonalizowany, szczegółowy plan 1-dniowej wycieczki dla miasta: %s.\n" +
+                            "Stwórz spersonalizowany, szczegółowy plan podróży dla miasta: %s na okres %d dni.\n" +
+                            "Preferowane tempo wyjazdu: %s.\n" +
                             "Aktualna pogoda: %.1f°C, %s.\n" +
-                            "Popularne atrakcje i ciekawe miejsca w mieście pobrane z API (Foursquare):\n%s\n\n" +
+                            "Jeśli podano poniższe atrakcje, możesz je uwzględnić w planie. Jeśli lista jest pusta lub niepełna, samodzielnie dobierz najciekawsze atrakcje i zabytki w tym mieście:\n%s\n\n" +
                             "Wymagania dla planu:\n" +
-                            "1. Przedstaw plan w postaci sformatowanego dokumentu Markdown z podziałem na Rano, Popołudnie i Wieczór.\n" +
-                            "2. Dostosuj sugestie bezpośrednio do aktualnej pogody.\n" +
-                            "3. Napisz, co warto ze sobą zabrać w oparciu o pogodę.\n" +
-                            "4. Odpowiedz po polsku.",
+                            "1. Przedstaw plan w postaci sformatowanego dokumentu Markdown z podziałem na każdy dzień (użyj nagłówków drugiego stopnia, np. '## Dzień 1', '## Dzień 2' itd.).\n" +
+                            "2. Dla każdego dnia rozpisz harmonogram podzielony na Rano, Popołudnie i Wieczór (użyj nagłówków trzeciego stopnia, np. '### Rano', '### Popołudnie', '### Wieczór').\n" +
+                            "3. Dostosuj intensywność planu do tempa (%s): w tempie luźnym sugeruj mniej atrakcji i więcej odpoczynku, w tempie intensywnym zaplanuj dzień bardziej aktywnie.\n" +
+                            "4. Dostosuj sugestie bezpośrednio do aktualnej pogody (np. aktywności pod dachem w razie deszczu, parki przy dobrej pogodzie).\n" +
+                            "5. Napisz krótkie podsumowanie z sugestiami co warto ze sobą zabrać w oparciu o pogodę.\n" +
+                            "6. Całość napisz w języku polskim.",
                     city,
+                    days,
+                    translatedPace,
                     temp,
                     weatherDesc,
-                    String.join("\n", placesInfo)
+                    placesInfo == null || placesInfo.isEmpty() ? "(brak zewnętrznych danych - dobierz atrakcje samodzielnie)" : String.join("\n", placesInfo),
+                    translatedPace
             );
 
             Map<String, Object> requestBody = Map.of(

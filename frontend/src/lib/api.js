@@ -130,8 +130,11 @@ export const authService = {
 };
 
 export const tripService = {
-  planTrip(city) {
-    return request(`/api/v1/trips/plan/${encodeURIComponent(city)}`, { auth: true });
+  planTrip(city, days, pace) {
+    return request(`/api/v1/trips/plan/${encodeURIComponent(city)}`, {
+      auth: true,
+      params: { days, pace }
+    });
   },
 
   getSavedPlans() {

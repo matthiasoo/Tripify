@@ -10,6 +10,8 @@ const CITIES = ["Warsaw", "Porto", "Dubai", "Vienna", "New York"];
 
 export default function Home() {
     const [cityInput, setCityInput] = useState("");
+    const [days, setDays] = useState(3);
+    const [pace, setPace] = useState("relaxed");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [tripPlan, setTripPlan] = useState(null);
@@ -78,7 +80,7 @@ export default function Home() {
             setSavedPlanId(null);
 
             const [planData, imageData] = await Promise.all([
-                tripService.planTrip(city),
+                tripService.planTrip(city, days, pace),
                 cityImageService.search({ city, perPage: 1 }).catch(() => null),
             ]);
 
@@ -179,24 +181,57 @@ export default function Home() {
                 <CitySlider cities={CITIES} onSelectCity={handlePlanTrip} />
             </div>
 
-            <form onSubmit={handleSearchSubmit} className="flex w-full max-w-md animate-fade-in items-center gap-2">
-                <div className="relative flex-1">
-                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted" />
-                    <input
-                        type="text"
-                        placeholder="Wpisz dowolne miasto na świecie..."
-                        value={cityInput}
-                        onChange={(event) => setCityInput(event.target.value)}
-                        className="w-full rounded-xl border border-outline bg-panel py-3 pl-12 pr-4 text-primary shadow-panel outline-none transition-all duration-300 placeholder:text-muted focus:border-[var(--color-glow)] focus:shadow-hover"
-                    />
+            <form onSubmit={handleSearchSubmit} className="flex w-full max-w-2xl animate-fade-in flex-col gap-4">
+                <div className="flex w-full items-center gap-2">
+                    <div className="relative flex-1">
+                        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted" />
+                        <input
+                            type="text"
+                            placeholder="Wpisz dowolne miasto na świecie..."
+                            value={cityInput}
+                            onChange={(event) => setCityInput(event.target.value)}
+                            className="w-full rounded-xl border border-outline bg-panel py-3 pl-12 pr-4 text-primary shadow-panel outline-none transition-all duration-300 placeholder:text-muted focus:border-[var(--color-glow)] focus:shadow-hover"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={checkingSession || loading || !cityInput.trim() || !user}
+                        className="cursor-pointer rounded-xl bg-[var(--color-glow)] px-6 py-3 font-semibold text-[var(--color-main)] shadow-panel transition-all duration-250 ease-out hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                        Zaplanuj
+                    </button>
                 </div>
-                <button
-                    type="submit"
-                    disabled={checkingSession || loading || !cityInput.trim() || !user}
-                    className="cursor-pointer rounded-xl bg-[var(--color-glow)] px-6 py-3 font-semibold text-[var(--color-main)] shadow-panel transition-all duration-250 ease-out hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                >
-                    Zaplanuj
-                </button>
+
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="days-select" className="text-sm font-medium text-muted">Długość pobytu:</label>
+                        <select
+                            id="days-select"
+                            value={days}
+                            onChange={(e) => setDays(Number(e.target.value))}
+                            className="rounded-xl border border-outline bg-panel px-4 py-2 text-sm text-primary shadow-panel outline-none transition-all duration-300 focus:border-[var(--color-glow)]"
+                        >
+                            {[1, 2, 3, 4, 5, 6, 7, 10, 14].map((d) => (
+                                <option key={d} value={d}>
+                                    {d} {d === 1 ? "dzień" : d < 5 ? "dni" : "dni"}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <label htmlFor="pace-select" className="text-sm font-medium text-muted">Tempo wycieczki:</label>
+                        <select
+                            id="pace-select"
+                            value={pace}
+                            onChange={(e) => setPace(e.target.value)}
+                            className="rounded-xl border border-outline bg-panel px-4 py-2 text-sm text-primary shadow-panel outline-none transition-all duration-300 focus:border-[var(--color-glow)]"
+                        >
+                            <option value="relaxed">Luźne / Spokojne</option>
+                            <option value="intense">Intensywne / Aktywne</option>
+                        </select>
+                    </div>
+                </div>
             </form>
 
             {!checkingSession && !user && (

@@ -42,6 +42,8 @@ public class TripController {
     @Operation(summary = "Plan a trip", description = "Fetches weather and interesting places for a given city asynchronously.")
     public ResponseEntity<?> planTrip(
             @PathVariable String city,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "1") int days,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "relaxed") String pace,
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization
     ) {
         AppUser user = getAuthenticatedUser(authorization);
@@ -49,7 +51,7 @@ public class TripController {
             return unauthorized();
         }
 
-        TripPlanResponse response = tripPlannerService.planTrip(city, user);
+        TripPlanResponse response = tripPlannerService.planTrip(city, days, pace, user);
         return ResponseEntity.ok(response);
     }
 
