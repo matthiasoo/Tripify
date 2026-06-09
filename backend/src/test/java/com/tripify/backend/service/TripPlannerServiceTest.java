@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.client.RestClient;
 import com.tripify.backend.client.OpenWeatherClient;
 import com.tripify.backend.dto.*;
-import com.tripify.backend.model.AppUser;
 import com.tripify.backend.model.SavedTripPlan;
 import com.tripify.backend.repository.SavedTripPlanRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +64,7 @@ class TripPlannerServiceTest {
         String city = "Rome";
         int days = 3;
         String pace = "relaxed";
-        AppUser user = new AppUser("user@example.com", "User", "hash");
+        Long userId = 1L;
 
         WeatherDto mockWeather = new WeatherDto(25.0, "Sunny");
         List<PlaceDto> mockPlaces = List.of(
@@ -83,7 +82,7 @@ class TripPlannerServiceTest {
         when(responseSpec.body(String.class)).thenReturn(mockPlan);
 
         // Act
-        TripPlanResponse response = tripPlannerService.planTrip(city, days, pace, user);
+        TripPlanResponse response = tripPlannerService.planTrip(city, days, pace, userId);
 
         // Assert
         assertNotNull(response);
@@ -100,7 +99,7 @@ class TripPlannerServiceTest {
         String city = "Rome";
         int days = 2;
         String pace = "intense";
-        AppUser user = new AppUser("user@example.com", "User", "hash");
+        Long userId = 1L;
 
         WeatherDto mockWeather = new WeatherDto(15.0, "Rainy");
         List<PlaceDto> mockPlaces = List.of(new PlaceDto("Colosseum", "History", "Piazza del Colosseo"));
@@ -110,7 +109,7 @@ class TripPlannerServiceTest {
         when(restClient.post()).thenThrow(new RuntimeException("Service unavailable"));
 
         // Act
-        TripPlanResponse response = tripPlannerService.planTrip(city, days, pace, user);
+        TripPlanResponse response = tripPlannerService.planTrip(city, days, pace, userId);
 
         // Assert
         assertNotNull(response);
@@ -122,18 +121,18 @@ class TripPlannerServiceTest {
     @Test
     void savePlan_Success() {
         // Arrange
-        AppUser user = new AppUser("user@example.com", "User", "hash");
+        Long userId = 1L;
         WeatherDto weather = new WeatherDto(20.0, "Cloudy");
         List<PlaceDto> places = List.of(new PlaceDto("Colosseum", "History", "Rome"));
         SaveTripPlanRequest request = new SaveTripPlanRequest("Rome", weather, places, "Plan text");
 
-        SavedTripPlan savedTripPlan = new SavedTripPlan(user, "Rome", 20.0, "Cloudy", "[]", "Plan text");
+        SavedTripPlan savedTripPlan = new SavedTripPlan(userId, "Rome", 20.0, "Cloudy", "[]", "Plan text");
         ReflectionTestUtils.setField(savedTripPlan, "id", 123L);
 
         when(savedTripPlanRepository.save(any(SavedTripPlan.class))).thenReturn(savedTripPlan);
 
         // Act
-        SavedTripPlanResponse response = tripPlannerService.savePlan(user, request);
+        SavedTripPlanResponse response = tripPlannerService.savePlan(userId, request);
 
         // Assert
         assertNotNull(response);
@@ -146,12 +145,12 @@ class TripPlannerServiceTest {
     @Test
     void deleteSavedPlan_Success() {
         // Arrange
-        AppUser user = new AppUser("user@example.com", "User", "hash");
+        Long userId = 1L;
         Long planId = 1L;
-        when(savedTripPlanRepository.existsByIdAndUser(planId, user)).thenReturn(true);
+        when(savedTripPlanRepository.existsByIdAndUserId(planId, userId)).thenReturn(true);
 
         // Act
-        tripPlannerService.deleteSavedPlan(user, planId);
+        tripPlannerService.deleteSavedPlan(userId, planId);
 
         // Assert
         verify(savedTripPlanRepository, times(1)).deleteById(planId);
@@ -160,26 +159,26 @@ class TripPlannerServiceTest {
     @Test
     void deleteSavedPlan_ThrowsException_WhenNotFound() {
         // Arrange
-        AppUser user = new AppUser("user@example.com", "User", "hash");
+        Long userId = 1L;
         Long planId = 1L;
-        when(savedTripPlanRepository.existsByIdAndUser(planId, user)).thenReturn(false);
+        when(savedTripPlanRepository.existsByIdAndUserId(planId, userId)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> tripPlannerService.deleteSavedPlan(user, planId));
+        assertThrows(IllegalArgumentException.class, () -> tripPlannerService.deleteSavedPlan(userId, planId));
         verify(savedTripPlanRepository, never()).deleteById(anyLong());
     }
 
     @Test
     void getSavedPlans_Success() {
         // Arrange
-        AppUser user = new AppUser("user@example.com", "User", "hash");
-        SavedTripPlan savedPlan = new SavedTripPlan(user, "Rome", 20.0, "Cloudy", "[]", "Plan text");
+        Long userId = 1L;
+        SavedTripPlan savedPlan = new SavedTripPlan(userId, "Rome", 20.0, "Cloudy", "[]", "Plan text");
         ReflectionTestUtils.setField(savedPlan, "id", 5L);
 
-        when(savedTripPlanRepository.findByUserOrderByCreatedAtDesc(user)).thenReturn(List.of(savedPlan));
+        when(savedTripPlanRepository.findByUserIdOrderByCreatedAtDesc(userId)).thenReturn(List.of(savedPlan));
 
         // Act
-        List<SavedTripPlanResponse> result = tripPlannerService.getSavedPlans(user);
+        List<SavedTripPlanResponse> result = tripPlannerService.getSavedPlans(userId);
 
         // Assert
         assertNotNull(result);

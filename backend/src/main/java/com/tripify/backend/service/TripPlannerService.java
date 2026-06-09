@@ -11,7 +11,6 @@ import com.tripify.backend.dto.SaveTripPlanRequest;
 import com.tripify.backend.dto.SavedTripPlanResponse;
 import com.tripify.backend.dto.TripPlanResponse;
 import com.tripify.backend.dto.WeatherDto;
-import com.tripify.backend.model.AppUser;
 import com.tripify.backend.model.SavedTripPlan;
 import com.tripify.backend.repository.SavedTripPlanRepository;
 import jakarta.transaction.Transactional;
@@ -47,7 +46,7 @@ public class TripPlannerService {
         this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
-    public TripPlanResponse planTrip(String city, int days, String pace, AppUser user) {
+    public TripPlanResponse planTrip(String city, int days, String pace, Long userId) {
         log.info("Starting trip planning for {} days (pace: {}) in {} on main thread. Is virtual: {}", days, pace, city,
                 Thread.currentThread().isVirtual());
 
@@ -94,10 +93,10 @@ public class TripPlannerService {
     }
 
     @Transactional
-    public SavedTripPlanResponse savePlan(AppUser user, SaveTripPlanRequest request) {
+    public SavedTripPlanResponse savePlan(Long userId, SaveTripPlanRequest request) {
         List<PlaceDto> places = request.places() == null ? List.of() : request.places();
         SavedTripPlan savedTripPlan = savedTripPlanRepository.save(new SavedTripPlan(
-                user,
+                userId,
                 request.city(),
                 request.weather().temperature(),
                 request.weather().description(),
@@ -109,15 +108,15 @@ public class TripPlannerService {
     }
 
     @Transactional
-    public void deleteSavedPlan(AppUser user, Long planId) {
-        if (!savedTripPlanRepository.existsByIdAndUser(planId, user)) {
+    public void deleteSavedPlan(Long userId, Long planId) {
+        if (!savedTripPlanRepository.existsByIdAndUserId(planId, userId)) {
             throw new IllegalArgumentException("Nie znaleziono zapisanego planu podróży.");
         }
         savedTripPlanRepository.deleteById(planId);
     }
 
-    public List<SavedTripPlanResponse> getSavedPlans(AppUser user) {
-        return savedTripPlanRepository.findByUserOrderByCreatedAtDesc(user).stream()
+    public List<SavedTripPlanResponse> getSavedPlans(Long userId) {
+        return savedTripPlanRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toSavedTripPlanResponse)
                 .toList();
     }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Tripify — Logowanie</title>
+    <link rel="stylesheet" th:href="@{/css/auth.css}"/>
+</head>
+<body>
+<main class="card">
+    <h1 class="brand">Tripify</h1>
+    <p class="subtitle">Zaloguj się, aby planować podróże.</p>
+
+    <div th:if="${param.error}" class="alert" role="alert">
+        Nieprawidłowy email lub hasło.
+    </div>
+    <div th:if="${param.logout}" class="notice">
+        Zostałeś wylogowany.
+    </div>
+    <div th:if="${param.registered}" class="notice">
+        Konto zostało utworzone. Możesz się zalogować.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+        <label>
+            Email
+            <input type="email" name="username" autocomplete="username" required autofocus/>
+        </label>
+        <label>
+            Hasło
+            <input type="password" name="password" autocomplete="current-password" required/>
+        </label>
+        <button type="submit">Zaloguj</button>
+    </form>
+
+    <p class="switch">
+        Nie masz konta?
+        <a th:href="@{/register}">Zarejestruj się</a>
+    </p>
+</main>
+</body>
+</html>

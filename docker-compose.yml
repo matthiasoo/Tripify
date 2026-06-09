@@ -23,9 +23,25 @@ services:
       - eureka-server
     restart: unless-stopped
 
+  auth-server:
+    build:
+      context: ./auth-server
+      dockerfile: Dockerfile
+    container_name: tripify-auth-server
+    ports:
+      - "9000:9000"
+    environment:
+      - AUTH_ISSUER_URI=http://localhost:9000
+      - FRONTEND_REDIRECT_URI=http://localhost:3000/callback
+      - FRONTEND_ORIGIN=http://localhost:3000
+    depends_on:
+      - eureka-server
+    restart: unless-stopped
+
   backend:
     depends_on:
       - eureka-server
+      - auth-server
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -34,6 +50,8 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=default
+      - AUTH_JWK_SET_URI=http://auth-server:9000/oauth2/jwks
+      - AUTH_ISSUER_URI=http://localhost:9000
     env_file:
       - ./backend/.env
     healthcheck:
@@ -50,10 +68,13 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://localhost:8081
+        - NEXT_PUBLIC_AUTH_URL=http://localhost:9000
     container_name: tripify-frontend
     ports:
       - "3000:3000"
     depends_on:
       backend:
+        condition: service_started
+      auth-server:
         condition: service_started
     restart: unless-stopped

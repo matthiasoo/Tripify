@@ -1,0 +1,16 @@
+com\tripify\auth\service\AppUserDetailsService.class
+com\tripify\auth\config\AuthorizationServerConfig.class
+com\tripify\auth\controller\AccountController.class
+com\tripify\auth\dto\RegisterRequest.class
+com\tripify\auth\repository\AppUserRepository.class
+com\tripify\auth\dto\UpdateProfileRequest.class
+com\tripify\auth\dto\UserResponse.class
+com\tripify\auth\controller\LoginController.class
+com\tripify\auth\dto\ChangePasswordRequest.class
+com\tripify\auth\config\SecurityConfig.class
+com\tripify\auth\controller\RegistrationController$RegisterForm.class
+com\tripify\auth\controller\RegistrationController.class
+com\tripify\auth\service\AccountService.class
+com\tripify\auth\model\AppUser.class
+com\tripify\auth\service\RegistrationService.class
+com\tripify\auth\AuthServerApplication.class

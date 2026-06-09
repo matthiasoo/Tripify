@@ -2,13 +2,10 @@ package com.tripify.backend.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -21,9 +18,12 @@ public class SavedTripPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private AppUser user;
+    /**
+     * Owner of the plan, identified by the {@code uid} claim of the JWT issued by the
+     * authorization server. The user record itself lives in the auth-server.
+     */
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(nullable = false, length = 120)
     private String city;
@@ -49,14 +49,14 @@ public class SavedTripPlan {
     }
 
     public SavedTripPlan(
-            AppUser user,
+            Long userId,
             String city,
             double weatherTemperature,
             String weatherDescription,
             String placesJson,
             String plan
     ) {
-        this.user = user;
+        this.userId = userId;
         this.city = city;
         this.weatherTemperature = weatherTemperature;
         this.weatherDescription = weatherDescription;
@@ -66,6 +66,10 @@ public class SavedTripPlan {
 
     public Long getId() {
         return id;
+    }
+
+    public Long getUserId() {
+        return userId;
     }
 
     public String getCity() {
