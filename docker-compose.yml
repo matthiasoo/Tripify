@@ -80,7 +80,7 @@ services:
     restart: unless-stopped
 
   sonarqube:
-    image: sonarqube:lts-community
+    image: sonarqube:community
     container_name: tripify-sonarqube
     ports:
       - "9001:9000"
