@@ -78,3 +78,12 @@ services:
       auth-server:
         condition: service_started
     restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: tripify-sonarqube
+    ports:
+      - "9001:9000"
+    environment:
+      - SONAR_FORCEAUTHENTICATION=false
+    restart: unless-stopped

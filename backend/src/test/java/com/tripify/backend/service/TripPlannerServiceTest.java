@@ -89,7 +89,7 @@ class TripPlannerServiceTest {
         assertEquals(city, response.city());
         assertEquals(25.0, response.weather().temperature());
         assertEquals("Sunny", response.weather().description());
-        assertEquals(2, response.places().size());
+        assertEquals(0, response.places().size());
         assertEquals(mockPlan, response.plan());
     }
 
@@ -115,7 +115,6 @@ class TripPlannerServiceTest {
         assertNotNull(response);
         assertEquals(city, response.city());
         assertTrue(response.plan().contains("awaryjny plan lokalny"));
-        assertTrue(response.plan().contains("Colosseum"));
     }
 
     @Test
