@@ -1,0 +1,19 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ai-service
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    preferIpAddress: true
+
+api:
+  groq:
+    model: ${API_GROQ_MODEL:llama-3.3-70b-versatile}
+    url: ${GROQ_API_URL:https://api.groq.com/openai/v1/chat/completions}
+    key: ${GROQ_API_KEY:dummy-key}
