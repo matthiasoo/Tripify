@@ -1,4 +1,15 @@
 services:
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: tripify-config-server
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-repo:/config-repo
+    restart: unless-stopped
+
   eureka-server:
     build:
       context: ./eureka-server
@@ -6,6 +17,10 @@ services:
     container_name: tripify-eureka
     ports:
       - "8761:8761"
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+    depends_on:
+      - config-server
     restart: unless-stopped
 
   ai-service:
@@ -17,9 +32,11 @@ services:
       - "8082:8082"
     environment:
       - GROQ_API_KEY=${API_GROQ_KEY}
+      - CONFIG_SERVER_URL=http://config-server:8888
     env_file:
       - ./backend/.env
     depends_on:
+      - config-server
       - eureka-server
     restart: unless-stopped
 
@@ -34,12 +51,15 @@ services:
       - AUTH_ISSUER_URI=http://localhost:9000
       - FRONTEND_REDIRECT_URI=http://localhost:3000/callback
       - FRONTEND_ORIGIN=http://localhost:3000
+      - CONFIG_SERVER_URL=http://config-server:8888
     depends_on:
+      - config-server
       - eureka-server
     restart: unless-stopped
 
   backend:
     depends_on:
+      - config-server
       - eureka-server
       - auth-server
     build:
@@ -52,6 +72,7 @@ services:
       - SPRING_PROFILES_ACTIVE=default
       - AUTH_JWK_SET_URI=http://auth-server:9000/oauth2/jwks
       - AUTH_ISSUER_URI=http://localhost:9000
+      - CONFIG_SERVER_URL=http://config-server:8888
     env_file:
       - ./backend/.env
     healthcheck:
