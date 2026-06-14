@@ -52,6 +52,8 @@ services:
       - FRONTEND_REDIRECT_URI=http://localhost:3000/callback
       - FRONTEND_ORIGIN=http://localhost:3000
       - CONFIG_SERVER_URL=http://config-server:8888
+    env_file:
+      - ./backend/.env
     depends_on:
       - config-server
       - eureka-server
