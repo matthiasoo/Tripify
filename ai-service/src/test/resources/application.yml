@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+
+api:
+  groq:
+    model: dummy
+    url: http://dummy
+    key: dummy

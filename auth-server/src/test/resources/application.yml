@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:tripify-auth-test
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+
+app:
+  issuer-uri: http://localhost:9000
+  frontend-redirect-uri: http://localhost:3000/callback
+  frontend-origin: http://localhost:3000
