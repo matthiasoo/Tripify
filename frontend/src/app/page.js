@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { FiAlertCircle, FiLayers, FiMapPin, FiSave, FiSearch } from "react-icons/fi";
 import CitySlider from "@/components/CitySlider/CitySlider";
+import PlanContent from "@/components/PlanContent/PlanContent";
 import { authService, cityImageService, tripService } from "@/lib/api";
 
 const CITIES = ["Warsaw", "Porto", "Dubai", "Vienna", "New York"];
@@ -114,53 +115,6 @@ export default function Home() {
     function handleSearchSubmit(event) {
         event.preventDefault();
         handlePlanTrip(cityInput);
-    }
-
-    function renderInlineFormatting(text) {
-        const parts = text.split(/(\*\*.*?\*\*)/g);
-        return parts.map((part, index) => {
-            if (part.startsWith("**") && part.endsWith("**")) {
-                return <strong key={index} className="font-bold text-primary">{part.slice(2, -2)}</strong>;
-            }
-            return part;
-        });
-    }
-
-    function parseMarkdown(markdown) {
-        if (!markdown) return null;
-        return markdown.split("\n").map((line, index) => {
-            const trimmed = line.trim();
-            if (trimmed.startsWith("# ")) {
-                return <h2 key={index} className="my-6 border-b border-outline pb-2 text-3xl font-extrabold tracking-tight text-primary">{trimmed.slice(2)}</h2>;
-            }
-            if (trimmed.startsWith("## ")) {
-                return <h3 key={index} className="my-4 mt-8 text-2xl font-bold tracking-tight text-primary">{trimmed.slice(3)}</h3>;
-            }
-            if (trimmed.startsWith("### ")) {
-                return <h4 key={index} className="my-3 mt-6 flex items-center gap-2 text-xl font-bold tracking-tight text-primary">{trimmed.slice(4)}</h4>;
-            }
-            if (trimmed.startsWith("#### ")) {
-                return <h5 key={index} className="my-2 mt-4 text-lg font-semibold tracking-tight text-primary">{trimmed.slice(5)}</h5>;
-            }
-            if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-                return (
-                    <li key={index} className="my-2 ml-6 list-disc leading-relaxed text-muted">
-                        {renderInlineFormatting(trimmed.slice(2))}
-                    </li>
-                );
-            }
-            if (trimmed === "---") {
-                return <hr key={index} className="my-6 border-outline" />;
-            }
-            if (trimmed === "") {
-                return <div key={index} className="h-2" />;
-            }
-            return (
-                <p key={index} className="my-2.5 leading-relaxed text-muted">
-                    {renderInlineFormatting(trimmed)}
-                </p>
-            );
-        });
     }
 
     return (
@@ -348,9 +302,7 @@ export default function Home() {
                                 </p>
                             )}
 
-                            <div className="prose prose-sm prose-invert max-w-none">
-                                {parseMarkdown(tripPlan.plan)}
-                            </div>
+                            <PlanContent markdown={tripPlan.plan} />
                         </div>
                     </div>
                 </div>

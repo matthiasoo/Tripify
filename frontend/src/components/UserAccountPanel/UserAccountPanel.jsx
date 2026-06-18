@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiClock, FiLock, FiMapPin, FiSave, FiTrash2, FiUser } from "react-icons/fi";
+import { FiLock, FiMapPin, FiSave, FiUser } from "react-icons/fi";
 import { authService, setStoredToken, tripService } from "@/lib/api";
+import SavedPlanCard from "@/components/SavedPlanCard/SavedPlanCard";
 
 const INITIAL_PROFILE = {
     name: "",
@@ -349,54 +350,12 @@ export default function UserAccountPanel() {
                 ) : (
                     <div className="grid gap-4">
                         {savedPlans.map((savedPlan) => (
-                            <article key={savedPlan.id} className="rounded-md border border-outline bg-main p-4">
-                                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <h3 className="text-lg font-bold capitalize">{savedPlan.city}</h3>
-                                        <p className="mt-1 text-sm text-muted">
-                                            {Math.round(savedPlan.weather.temperature)}°C, {savedPlan.weather.description}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-2 text-xs text-muted">
-                                            <FiClock />
-                                            {new Date(savedPlan.createdAt).toLocaleString("pl-PL")}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => deleteSavedPlan(savedPlan.id)}
-                                            disabled={deletingPlanId === savedPlan.id}
-                                            className="grid h-9 w-9 place-items-center rounded-md border border-danger-outline bg-danger-panel text-danger transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
-                                            aria-label="Usuń plan"
-                                            title="Usuń plan"
-                                        >
-                                            <FiTrash2 />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {savedPlan.places?.length > 0 && (
-                                    <div className="mb-3 flex flex-wrap gap-2">
-                                        {savedPlan.places.slice(0, 3).map((place) => (
-                                            <span
-                                                key={`${savedPlan.id}-${place.name}`}
-                                                className="rounded-md border border-outline bg-panel px-2 py-1 text-xs text-muted"
-                                            >
-                                                {place.name}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-
-                                <details className="text-sm">
-                                    <summary className="cursor-pointer font-semibold text-primary">
-                                        Pokaż plan
-                                    </summary>
-                                    <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-md border border-outline bg-panel p-3 font-sans text-sm leading-relaxed text-muted">
-                                        {savedPlan.plan}
-                                    </pre>
-                                </details>
-                            </article>
+                            <SavedPlanCard
+                                key={savedPlan.id}
+                                plan={savedPlan}
+                                onDelete={deleteSavedPlan}
+                                deleting={deletingPlanId === savedPlan.id}
+                            />
                         ))}
                     </div>
                 )}
