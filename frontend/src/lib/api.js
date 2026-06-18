@@ -232,6 +232,14 @@ export const tripService = {
     });
   },
 
+  regeneratePlan(planId, { days, pace }) {
+    return request(`/api/v1/trips/mine/${planId}/regenerate`, {
+      method: "POST",
+      auth: true,
+      params: { days, pace },
+    });
+  },
+
   deleteSavedPlan(planId) {
     return request(`/api/v1/trips/mine/${planId}`, {
       method: "DELETE",

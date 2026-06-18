@@ -157,6 +157,14 @@ export default function UserAccountPanel() {
         }
     }
 
+    async function regenerateSavedPlan(planId, options) {
+        const updatedPlan = await tripService.regeneratePlan(planId, options);
+        setSavedPlans((currentPlans) =>
+            currentPlans.map((plan) => (plan.id === planId ? updatedPlan : plan))
+        );
+        return updatedPlan;
+    }
+
     async function deleteSavedPlan(planId) {
         setDeletingPlanId(planId);
         setPlansError("");
@@ -355,6 +363,7 @@ export default function UserAccountPanel() {
                                 plan={savedPlan}
                                 onDelete={deleteSavedPlan}
                                 deleting={deletingPlanId === savedPlan.id}
+                                onRegenerate={regenerateSavedPlan}
                             />
                         ))}
                     </div>

@@ -62,6 +62,17 @@ public class TripController {
         return ResponseEntity.status(HttpStatus.CREATED).body(tripPlannerService.savePlan(userId(jwt), request));
     }
 
+    @PostMapping("/mine/{planId}/regenerate")
+    @Operation(summary = "Regenerate saved trip plan", description = "Re-runs AI generation for a saved plan's city with the chosen length and pace, then overwrites the stored plan.")
+    public ResponseEntity<SavedTripPlanResponse> regeneratePlan(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long planId,
+            @RequestParam(defaultValue = "1") int days,
+            @RequestParam(defaultValue = "relaxed") String pace
+    ) {
+        return ResponseEntity.ok(tripPlannerService.regeneratePlan(userId(jwt), planId, days, pace));
+    }
+
     @DeleteMapping("/mine/{planId}")
     @Operation(summary = "Delete saved trip plan", description = "Deletes a saved trip plan owned by the current user.")
     public ResponseEntity<Void> deleteSavedPlan(

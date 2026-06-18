@@ -113,6 +113,27 @@ class TripControllerTest {
     }
 
     @Test
+    void regeneratePlan_Success() throws Exception {
+        SavedTripPlanResponse mockResponse = new SavedTripPlanResponse(
+                1L, "Rome", new WeatherDto(18.0, "Cloudy"),
+                List.of(), "Regenerated plan", Instant.now()
+        );
+
+        when(tripPlannerService.regeneratePlan(eq(USER_ID), eq(1L), eq(5), eq("intense")))
+                .thenReturn(mockResponse);
+
+        mockMvc.perform(post("/api/v1/trips/mine/1/regenerate")
+                        .with(authenticatedUser())
+                        .param("days", "5")
+                        .param("pace", "intense"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.plan").value("Regenerated plan"));
+
+        verify(tripPlannerService, times(1)).regeneratePlan(eq(USER_ID), eq(1L), eq(5), eq("intense"));
+    }
+
+    @Test
     void deleteSavedPlan_Success() throws Exception {
         doNothing().when(tripPlannerService).deleteSavedPlan(eq(USER_ID), eq(1L));
 

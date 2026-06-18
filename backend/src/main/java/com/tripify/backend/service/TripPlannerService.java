@@ -108,6 +108,23 @@ public class TripPlannerService {
     }
 
     @Transactional
+    public SavedTripPlanResponse regeneratePlan(Long userId, Long planId, int days, String pace) {
+        SavedTripPlan savedTripPlan = savedTripPlanRepository.findByIdAndUserId(planId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono zapisanego planu podróży."));
+
+        TripPlanResponse regenerated = planTrip(savedTripPlan.getCity(), days, pace, userId);
+
+        savedTripPlan.applyRegeneratedPlan(
+                regenerated.weather().temperature(),
+                regenerated.weather().description(),
+                serializePlaces(regenerated.places()),
+                regenerated.plan()
+        );
+
+        return toSavedTripPlanResponse(savedTripPlanRepository.save(savedTripPlan));
+    }
+
+    @Transactional
     public void deleteSavedPlan(Long userId, Long planId) {
         if (!savedTripPlanRepository.existsByIdAndUserId(planId, userId)) {
             throw new IllegalArgumentException("Nie znaleziono zapisanego planu podróży.");

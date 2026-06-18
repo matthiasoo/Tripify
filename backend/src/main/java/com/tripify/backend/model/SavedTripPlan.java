@@ -64,6 +64,17 @@ public class SavedTripPlan {
         this.plan = plan;
     }
 
+    /**
+     * Overwrites the weather snapshot, places and plan content after an AI
+     * regeneration. The city and owner stay unchanged.
+     */
+    public void applyRegeneratedPlan(double weatherTemperature, String weatherDescription, String placesJson, String plan) {
+        this.weatherTemperature = weatherTemperature;
+        this.weatherDescription = weatherDescription;
+        this.placesJson = placesJson;
+        this.plan = plan;
+    }
+
     public Long getId() {
         return id;
     }

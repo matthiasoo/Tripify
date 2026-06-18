@@ -142,6 +142,49 @@ class TripPlannerServiceTest {
     }
 
     @Test
+    void regeneratePlan_OverwritesExistingPlan() {
+        // Arrange
+        Long userId = 1L;
+        Long planId = 7L;
+
+        SavedTripPlan existing = new SavedTripPlan(userId, "Rome", 10.0, "Old", "[]", "Old plan");
+        ReflectionTestUtils.setField(existing, "id", planId);
+
+        when(savedTripPlanRepository.findByIdAndUserId(planId, userId)).thenReturn(java.util.Optional.of(existing));
+        when(openWeatherClient.getWeatherForCity("Rome")).thenReturn(new WeatherDto(28.0, "Sunny"));
+        when(savedTripPlanRepository.save(any(SavedTripPlan.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(String.class)).thenReturn("Regenerated plan");
+
+        // Act
+        SavedTripPlanResponse response = tripPlannerService.regeneratePlan(userId, planId, 4, "intense");
+
+        // Assert
+        assertNotNull(response);
+        assertEquals("Rome", response.city());
+        assertEquals(28.0, response.weather().temperature());
+        assertEquals("Regenerated plan", response.plan());
+        verify(savedTripPlanRepository, times(1)).save(existing);
+    }
+
+    @Test
+    void regeneratePlan_ThrowsException_WhenNotFound() {
+        // Arrange
+        Long userId = 1L;
+        Long planId = 7L;
+        when(savedTripPlanRepository.findByIdAndUserId(planId, userId)).thenReturn(java.util.Optional.empty());
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> tripPlannerService.regeneratePlan(userId, planId, 3, "relaxed"));
+        verify(savedTripPlanRepository, never()).save(any(SavedTripPlan.class));
+    }
+
+    @Test
     void deleteSavedPlan_Success() {
         // Arrange
         Long userId = 1L;
