@@ -259,7 +259,7 @@ export default function Home() {
                         <div className="flex flex-col gap-4 text-left md:col-span-1">
                             <div className="flex items-center gap-2 border-b border-outline pb-2 text-lg font-bold text-primary">
                                 <FiMapPin className="text-[var(--color-glow)]" />
-                                <span>Atrakcje (Foursquare)</span>
+                                <span>Miejsca must-see (AI)</span>
                             </div>
 
                             <div className="flex flex-col gap-3">
@@ -268,12 +268,12 @@ export default function Home() {
                                         <div key={`${place.name}-${index}`} className="flex flex-col gap-1 rounded-2xl border border-outline bg-panel p-4 shadow-panel transition-all hover:border-[var(--color-glow)]">
                                             <span className="text-sm font-bold leading-tight text-primary">{place.name}</span>
                                             <span className="mt-1 self-start rounded-md bg-outline px-2 py-0.5 font-mono text-xs capitalize text-[var(--color-glow)]">{place.category}</span>
-                                            <span className="mt-2 text-xs leading-tight text-muted">{place.address}</span>
+                                            <span className="mt-2 text-xs leading-tight text-muted">{place.description}</span>
                                         </div>
                                     ))
                                 ) : (
                                     <div className="rounded-2xl border border-outline bg-panel p-4 text-center text-sm text-muted">
-                                        Brak znalezionych atrakcji w pobliżu.
+                                        Brak rekomendowanych miejsc dla tego miasta.
                                     </div>
                                 )}
                             </div>

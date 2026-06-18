@@ -1,6 +1,6 @@
-package com.tripify.backend.dto;
+package com.tripify.ai.dto;
 
-public record PlaceDto(
+public record PlaceRecommendation(
         String name,
         String category,
         String description

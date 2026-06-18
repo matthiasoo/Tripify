@@ -52,14 +52,16 @@ public class TripPlannerService {
 
         CompletableFuture<WeatherDto> weatherFuture = CompletableFuture.supplyAsync(
                 () -> openWeatherClient.getWeatherForCity(city), virtualThreadExecutor);
+        CompletableFuture<List<PlaceDto>> placesFuture = CompletableFuture.supplyAsync(
+                () -> fetchRecommendedPlaces(city), virtualThreadExecutor);
 
         try {
-            weatherFuture.join();
-
             WeatherDto weather = weatherFuture.get();
-            List<PlaceDto> places = List.of();
+            List<PlaceDto> places = placesFuture.get();
 
-            List<String> placesInfo = List.of();
+            List<String> placesInfo = places.stream()
+                    .map(place -> "%s (%s) - %s".formatted(place.name(), place.category(), place.description()))
+                    .toList();
 
             Map<String, Object> requestBody = Map.of(
                     "city", city,
@@ -149,6 +151,22 @@ public class TripPlannerService {
         );
     }
 
+    private List<PlaceDto> fetchRecommendedPlaces(String city) {
+        log.info("Fetching recommended places for city: {} on virtual thread: {}", city,
+                Thread.currentThread().isVirtual());
+        try {
+            PlaceDto[] places = aiServiceClient.post()
+                    .uri("/api/v1/ai/recommend-places")
+                    .body(Map.of("city", city, "count", 6))
+                    .retrieve()
+                    .body(PlaceDto[].class);
+            return places == null ? List.of() : List.of(places);
+        } catch (Exception e) {
+            log.warn("Could not fetch recommended places from ai-service", e);
+            return List.of();
+        }
+    }
+
     private String serializePlaces(List<PlaceDto> places) {
         try {
             return objectMapper.writeValueAsString(places);
@@ -196,13 +214,13 @@ public class TripPlannerService {
         for (int d = 1; d <= days; d++) {
             sb.append(String.format("## 📅 Dzień %d\n\n", d));
             
-            // Podział atrakcji z Foursquare (jeśli są dostępne) na poszczególne dni
+            // Podział rekomendowanych miejsc (jeśli są dostępne) na poszczególne dni
             int placeIndex = (d - 1) * (isIntense ? 2 : 1);
             
             sb.append("### 🌅 Rano\n");
             if (places != null && placeIndex < places.size()) {
                 PlaceDto p = places.get(placeIndex);
-                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - *Adres:* %s\n", p.name(), p.category(), p.address()));
+                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - %s\n", p.name(), p.category(), p.description()));
             } else {
                 sb.append("- Spacer po zabytkowym centrum miasta i śniadanie w przytulnej kawiarni.\n");
             }
@@ -215,10 +233,10 @@ public class TripPlannerService {
             int secondPlaceIndex = placeIndex + 1;
             if (places != null && !isIntense && secondPlaceIndex < places.size()) {
                 PlaceDto p = places.get(secondPlaceIndex);
-                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - *Adres:* %s\n", p.name(), p.category(), p.address()));
+                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - %s\n", p.name(), p.category(), p.description()));
             } else if (places != null && isIntense && secondPlaceIndex < places.size()) {
                 PlaceDto p = places.get(secondPlaceIndex);
-                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - *Adres:* %s\n", p.name(), p.category(), p.address()));
+                sb.append(String.format("- Wizyta w: **%s** (Kategoria: *%s*)\n  - %s\n", p.name(), p.category(), p.description()));
                 sb.append("- Krótki odpoczynek na lunch w tradycyjnej restauracji.\n");
             } else {
                 sb.append("- Tradycyjny lunch i relaks w parku miejskim lub spacer wzdłuż głównych ulic handlowych.\n");
