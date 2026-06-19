@@ -62,6 +62,6 @@ class WeatherControllerTest {
         mockMvc.perform(get("/api/v1/weather")
                         .param("city", "Warsaw"))
                 .andExpect(status().is(502))
-                .andExpect(jsonPath("$.error").value("Failed to fetch weather data."));
+                .andExpect(jsonPath("$.error").value("Nie udało się pobrać danych pogodowych."));
     }
 }

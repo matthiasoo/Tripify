@@ -60,6 +60,6 @@ class CityImageControllerTest {
         mockMvc.perform(get("/api/v1/city-images")
                         .param("city", "Paris"))
                 .andExpect(status().is(502))
-                .andExpect(jsonPath("$.error").value("Failed to fetch city images."));
+                .andExpect(jsonPath("$.error").value("Nie udało się pobrać zdjęć miasta."));
     }
 }
