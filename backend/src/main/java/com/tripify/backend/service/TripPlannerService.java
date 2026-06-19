@@ -134,6 +134,7 @@ public class TripPlannerService {
         savedTripPlanRepository.deleteById(planId);
     }
 
+    @Transactional
     public List<SavedTripPlanResponse> getSavedPlans(Long userId) {
         return savedTripPlanRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toSavedTripPlanResponse)
