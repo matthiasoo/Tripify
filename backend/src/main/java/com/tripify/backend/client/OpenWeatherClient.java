@@ -28,7 +28,7 @@ public class OpenWeatherClient {
 
         try {
             com.tripify.backend.dto.OpenWeatherResponse response = restClient.get()
-                    .uri(apiUrl + "/weather?q={city}&appid={key}&units=metric", city, apiKey)
+                    .uri(apiUrl + "/weather?q={city}&appid={key}&units=metric&lang=pl", city, apiKey)
                     .retrieve()
                     .body(com.tripify.backend.dto.OpenWeatherResponse.class);
 

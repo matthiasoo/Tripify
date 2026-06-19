@@ -45,7 +45,7 @@ public class WeatherService {
         } else if (city != null) {
             builder.queryParam("q", city);
         } else {
-            throw new IllegalArgumentException("Provide either 'city' or both 'lat' and 'lon' parameters.");
+            throw new IllegalArgumentException("Podaj parametr 'city' albo oba parametry 'lat' i 'lon'.");
         }
 
         String url = builder.build().toUriString();

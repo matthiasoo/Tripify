@@ -58,7 +58,7 @@ export default function CitySlider({ cities, onSelectCity }) {
                 <button
                     onClick={prev}
                     className="w-9 h-9 rounded-full border border-outline bg-panel text-primary flex items-center justify-center text-lg shadow-panel cursor-pointer transition-all duration-250 ease-out hover:bg-[var(--color-glow-gradient)] hover:border-[var(--color-glow)] hover:shadow-hover hover:scale-108 active:scale-95"
-                    aria-label="Previous city"
+                    aria-label="Poprzednie miasto"
                 >
                     <FiChevronLeft />
                 </button>
@@ -68,7 +68,7 @@ export default function CitySlider({ cities, onSelectCity }) {
                         <button
                             key={city}
                             onClick={() => goTo(i)}
-                            aria-label={`Go to ${city}`}
+                            aria-label={`Przejdź do ${city}`}
                             className={`h-2 rounded-full border-none cursor-pointer
                                         transition-all duration-300 ease-out
                                         ${i === current
@@ -82,7 +82,7 @@ export default function CitySlider({ cities, onSelectCity }) {
                 <button
                     onClick={next}
                     className="w-9 h-9 rounded-full border border-outline bg-panel text-primary flex items-center justify-center text-lg shadow-panel cursor-pointer transition-all duration-250 ease-out hover:bg-[var(--color-glow-gradient)] hover:border-[var(--color-glow)] hover:shadow-hover hover:scale-108 active:scale-95"
-                    aria-label="Next city"
+                    aria-label="Następne miasto"
                 >
                     <FiChevronRight />
                 </button>

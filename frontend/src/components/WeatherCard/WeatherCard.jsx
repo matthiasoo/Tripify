@@ -21,7 +21,7 @@ function getLocalTime(timezoneOffset) {
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
     const local = new Date(utc + timezoneOffset * 1000);
-    return local.toLocaleTimeString("en-US", {
+    return local.toLocaleTimeString("pl-PL", {
         hour: "2-digit",
         minute: "2-digit",
     });

@@ -124,7 +124,7 @@ export default function Home() {
                     Tripify
                 </h1>
                 <span className="mt-3 font-mono text-sm font-light text-muted">
-                    Travels made simple.
+                    Twoja podróż zaczyna się tutaj.
                 </span>
             </div>
 

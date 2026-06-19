@@ -14,7 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/city-images")
-@Tag(name = "City Images", description = "Proxy for Unsplash photo search")
+@Tag(name = "Zdjęcia miast", description = "Proxy dla wyszukiwarki zdjęć Unsplash")
 public class CityImageController {
 
     private final CityImageService cityImageService;
@@ -24,8 +24,8 @@ public class CityImageController {
     }
 
     @GetMapping
-    @Operation(summary = "Search city photos",
-               description = "Returns paginated city photos from Unsplash.")
+    @Operation(summary = "Wyszukaj zdjęcia miasta",
+               description = "Zwraca stronicowane zdjęcia miasta z Unsplash.")
     public ResponseEntity<?> searchCityImages(
             @RequestParam String city,
             @RequestParam(defaultValue = "1") int page,
@@ -36,7 +36,7 @@ public class CityImageController {
             CityImageResponse response = cityImageService.search(city, page, perPage, orientation);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(502).body(Map.of("error", "Failed to fetch city images."));
+            return ResponseEntity.status(502).body(Map.of("error", "Nie udało się pobrać zdjęć miasta."));
         }
     }
 }

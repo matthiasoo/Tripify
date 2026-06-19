@@ -15,13 +15,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata = {
     title: "Tripify",
-    description: "Travels made simple",
+    description: "Twoja podróż zaczyna się tutaj",
 };
 
 export default function RootLayout({ children }) {
     return (
         <html
-            lang="en"
+            lang="pl"
             suppressHydrationWarning
         >
             <body className={`min-h-screen w-full ${jakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>

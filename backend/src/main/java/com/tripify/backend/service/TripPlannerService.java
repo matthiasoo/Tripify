@@ -204,7 +204,8 @@ public class TripPlannerService {
         }
 
         String lowerDesc = weatherDesc.toLowerCase();
-        if (lowerDesc.contains("rain") || lowerDesc.contains("drizzle") || lowerDesc.contains("shower") || lowerDesc.contains("storm") || lowerDesc.contains("deszcz")) {
+        if (lowerDesc.contains("rain") || lowerDesc.contains("drizzle") || lowerDesc.contains("shower") || lowerDesc.contains("storm")
+                || lowerDesc.contains("deszcz") || lowerDesc.contains("mżawka") || lowerDesc.contains("burza") || lowerDesc.contains("przelotne")) {
             sb.append("- **Uwaga:** Zapowiadane są opady deszczu. Koniecznie zabierz ze sobą parasol lub kurtkę przeciwdeszczową. Warto skupić się na atrakcjach wewnątrz budynków.\n");
         } else {
             sb.append("- Brak prognozowanego deszczu. Pogoda jest doskonała do spacerów na świeżym powietrzu i zwiedzania miejskich zakątków.\n");
