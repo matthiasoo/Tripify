@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class GroqClientTest {
 
@@ -21,7 +20,7 @@ class GroqClientTest {
 
         List<PlaceRecommendation> places = groqClient.recommendPlaces("Rome", 6);
 
-        assertTrue(places.isEmpty());
+        assertThat(places).isEmpty();
     }
 
     @Test
@@ -30,7 +29,7 @@ class GroqClientTest {
 
         List<PlaceRecommendation> places = groqClient.recommendPlaces("Rome", 6);
 
-        assertTrue(places.isEmpty());
+        assertThat(places).isEmpty();
     }
 
     @Test
@@ -39,6 +38,6 @@ class GroqClientTest {
 
         String plan = groqClient.generatePlan("Rome", 3, "relaxed", 20.0, "Sunny", List.of());
 
-        assertNull(plan);
+        assertThat(plan).isNull();
     }
 }

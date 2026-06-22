@@ -11,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,7 +25,6 @@ class CityImageServiceTest {
 
     @Test
     void search_Success() {
-        // Arrange
         String city = "Paris";
         int page = 1;
         int perPage = 10;
@@ -36,7 +35,7 @@ class CityImageServiceTest {
         );
         UnsplashSearchResponse.UnsplashLinks links = new UnsplashSearchResponse.UnsplashLinks("html_link");
         UnsplashSearchResponse.UnsplashUser user = new UnsplashSearchResponse.UnsplashUser(
-                "John Doe", "johndoe", links
+                "Jimmy Gonzales", "jimmygonzales", links
         );
         UnsplashSearchResponse.UnsplashPhoto photo = new UnsplashSearchResponse.UnsplashPhoto(
                 "photo1", "Eiffel Tower", "alt_desc", urls, user, "blur", "#ffffff", 1920, 1080
@@ -45,32 +44,30 @@ class CityImageServiceTest {
 
         when(unsplashClient.searchPhotos(city, page, perPage, orientation)).thenReturn(mockResponse);
 
-        // Act
+
         CityImageResponse result = cityImageService.search(city, page, perPage, orientation);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(100, result.total());
-        assertEquals(10, result.totalPages());
-        assertEquals(1, result.photos().size());
+
+        assertThat(result).isNotNull();
+        assertThat(result.total()).isEqualTo(100);
+        assertThat(result.totalPages()).isEqualTo(10);
+        assertThat(result.photos()).hasSize(1);
 
         CityImageResponse.PhotoDto resultPhoto = result.photos().get(0);
-        assertEquals("photo1", resultPhoto.id());
-        assertEquals("Eiffel Tower", resultPhoto.description());
-        assertEquals("raw_url", resultPhoto.urls().raw());
-        assertEquals("reg_url", resultPhoto.urls().regular());
-        assertEquals("John Doe", resultPhoto.author().name());
-        assertEquals("html_link", resultPhoto.author().profileUrl());
+        assertThat(resultPhoto.id()).isEqualTo("photo1");
+        assertThat(resultPhoto.description()).isEqualTo("Eiffel Tower");
+        assertThat(resultPhoto.urls().raw()).isEqualTo("raw_url");
+        assertThat(resultPhoto.urls().regular()).isEqualTo("reg_url");
+        assertThat(resultPhoto.author().name()).isEqualTo("Jimmy Gonzales");
+        assertThat(resultPhoto.author().profileUrl()).isEqualTo("html_link");
     }
 
     @Test
     void search_FallbackDescription() {
-        // Arrange
         String city = "Paris";
         UnsplashSearchResponse.UnsplashUrls urls = new UnsplashSearchResponse.UnsplashUrls("r", "rg", "s", "t");
         UnsplashSearchResponse.UnsplashUser user = new UnsplashSearchResponse.UnsplashUser("User", "user", null);
         
-        // Photo with description = null, relying on altDescription
         UnsplashSearchResponse.UnsplashPhoto photo = new UnsplashSearchResponse.UnsplashPhoto(
                 "photo1", null, "Alternative Description", urls, user, "blur", "#ffffff", 1920, 1080
         );
@@ -78,10 +75,7 @@ class CityImageServiceTest {
 
         when(unsplashClient.searchPhotos(anyString(), anyInt(), anyInt(), anyString())).thenReturn(mockResponse);
 
-        // Act
         CityImageResponse result = cityImageService.search(city, 1, 1, "landscape");
-
-        // Assert
-        assertEquals("Alternative Description", result.photos().get(0).description());
+        assertThat(result.photos().get(0).description()).isEqualTo("Alternative Description");
     }
 }
