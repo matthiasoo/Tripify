@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FiAlertCircle, FiLayers, FiMapPin, FiSave, FiSearch } from "react-icons/fi";
 import CitySlider from "@/components/CitySlider/CitySlider";
 import PlanContent from "@/components/PlanContent/PlanContent";
+import CurrencyConverter from "@/components/CurrencyConverter/CurrencyConverter";
 import { authService, cityImageService, tripService } from "@/lib/api";
 
 const CITIES = ["Warsaw", "Porto", "Dubai", "Vienna", "New York"];
@@ -128,11 +129,19 @@ export default function Home() {
                 </span>
             </div>
 
-            <div className="flex w-full flex-col items-center gap-2">
-                <span className="mb-2 text-xs font-mono uppercase tracking-wider text-muted">
-                    Kliknij kartę, aby zaplanować podróż
-                </span>
-                <CitySlider cities={CITIES} onSelectCity={handlePlanTrip} />
+            <div className="grid w-full grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div className="flex w-full flex-col items-center gap-2">
+                    <span className="mb-2 text-xs font-mono uppercase tracking-wider text-muted">
+                        Popularne kierunki
+                    </span>
+                    <CitySlider cities={CITIES} onSelectCity={handlePlanTrip} />
+                </div>
+                <div className="flex w-full flex-col items-center gap-2 h-full">
+                    <span className="mb-2 text-xs font-mono uppercase tracking-wider text-muted">
+                        Aktualne kursy walut
+                    </span>
+                    <CurrencyConverter />
+                </div>
             </div>
 
             <form onSubmit={handleSearchSubmit} className="flex w-full max-w-2xl animate-fade-in flex-col gap-4">

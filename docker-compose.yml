@@ -40,6 +40,21 @@ services:
       - eureka-server
     restart: unless-stopped
 
+  currency-converter:
+    build:
+      context: ./currency-converter
+      dockerfile: Dockerfile
+    container_name: tripify-currency-converter
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server
+    restart: unless-stopped
+
+
   auth-server:
     build:
       context: ./auth-server
