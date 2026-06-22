@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -60,9 +61,12 @@ public class SecurityConfig {
 
         http
                 .cors(Customizer.withDefaults())
-                // Redirect unauthenticated browser requests to the custom login page.
+                // Redirect unauthenticated browser requests to the custom login page,
+                // or to the registration page when the authorize request asked for it
+                // (?screen=register). The saved authorize request is preserved either
+                // way, so after "register -> login" the code flow resumes correctly.
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
-                        new LoginUrlAuthenticationEntryPoint("/login"),
+                        screenAwareAuthenticationEntryPoint(),
                         new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                 ))
                 // Accept the JWT access token on protected resources (e.g. userinfo).
@@ -84,6 +88,24 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form.loginPage("/login").permitAll());
         return http.build();
+    }
+
+    /**
+     * Chooses between the login and registration pages based on the {@code screen}
+     * query parameter on the authorize request. The Spring Security saved-request
+     * mechanism stores the original authorize request before this runs, so resuming
+     * the flow after authentication works regardless of which page was shown.
+     */
+    private AuthenticationEntryPoint screenAwareAuthenticationEntryPoint() {
+        LoginUrlAuthenticationEntryPoint loginEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
+        LoginUrlAuthenticationEntryPoint registerEntryPoint = new LoginUrlAuthenticationEntryPoint("/register");
+        return (request, response, authException) -> {
+            if ("register".equals(request.getParameter("screen"))) {
+                registerEntryPoint.commence(request, response, authException);
+            } else {
+                loginEntryPoint.commence(request, response, authException);
+            }
+        };
     }
 
     @Bean

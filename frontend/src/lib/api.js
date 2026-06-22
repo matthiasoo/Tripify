@@ -71,8 +71,6 @@ async function request(path, { params = {}, method = "GET", body, auth = false, 
   return data;
 }
 
-/* ----------------------------- PKCE / OAuth2 ----------------------------- */
-
 function base64UrlEncode(bytes) {
   let binary = "";
   bytes.forEach((byte) => {
@@ -96,40 +94,38 @@ function redirectUri() {
   return `${window.location.origin}/callback`;
 }
 
+async function startAuthorizationFlow(screen) {
+  const verifier = randomString();
+  const state = randomString(32);
+  const challenge = await pkceChallenge(verifier);
+
+  window.sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+  window.sessionStorage.setItem(OAUTH_STATE_KEY, state);
+
+  const authorizeUrl = new URL(`${AUTH_BASE_URL}/oauth2/authorize`);
+  authorizeUrl.searchParams.set("response_type", "code");
+  authorizeUrl.searchParams.set("client_id", OAUTH_CLIENT_ID);
+  authorizeUrl.searchParams.set("scope", OAUTH_SCOPE);
+  authorizeUrl.searchParams.set("redirect_uri", redirectUri());
+  authorizeUrl.searchParams.set("code_challenge", challenge);
+  authorizeUrl.searchParams.set("code_challenge_method", "S256");
+  authorizeUrl.searchParams.set("state", state);
+  if (screen) {
+    authorizeUrl.searchParams.set("screen", screen);
+  }
+
+  window.location.assign(authorizeUrl.toString());
+}
+
 export const authService = {
-  /**
-   * Starts the Authorization Code + PKCE flow by redirecting the browser to the
-   * authorization server's login page.
-   */
-  async login() {
-    const verifier = randomString();
-    const state = randomString(32);
-    const challenge = await pkceChallenge(verifier);
-
-    window.sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
-    window.sessionStorage.setItem(OAUTH_STATE_KEY, state);
-
-    const authorizeUrl = new URL(`${AUTH_BASE_URL}/oauth2/authorize`);
-    authorizeUrl.searchParams.set("response_type", "code");
-    authorizeUrl.searchParams.set("client_id", OAUTH_CLIENT_ID);
-    authorizeUrl.searchParams.set("scope", OAUTH_SCOPE);
-    authorizeUrl.searchParams.set("redirect_uri", redirectUri());
-    authorizeUrl.searchParams.set("code_challenge", challenge);
-    authorizeUrl.searchParams.set("code_challenge_method", "S256");
-    authorizeUrl.searchParams.set("state", state);
-
-    window.location.assign(authorizeUrl.toString());
+  login() {
+    return startAuthorizationFlow();
   },
 
-  /** Sends the user to the authorization server's registration page. */
   register() {
-    window.location.assign(`${AUTH_BASE_URL}/register`);
+    return startAuthorizationFlow("register");
   },
 
-  /**
-   * Exchanges the authorization code for an access token. Called from /callback.
-   * Returns the access token on success.
-   */
   async completeLogin(code, state) {
     const expectedState = window.sessionStorage.getItem(OAUTH_STATE_KEY);
     const verifier = window.sessionStorage.getItem(PKCE_VERIFIER_KEY);
