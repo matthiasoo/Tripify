@@ -22,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 
 @Configuration
 @EnableWebSecurity
@@ -81,12 +82,19 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+        requestCache.setRequestMatcher(new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/oauth2/authorize**"));
+
         http
+                .requestCache(cache -> cache.requestCache(requestCache))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/error", "/css/**", "/webjars/**").permitAll()
+                        .requestMatchers("/register", "/error", "/css/**", "/webjars/**", "/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.loginPage("/login").permitAll());
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl(frontendOrigin)
+                        .permitAll());
         return http.build();
     }
 

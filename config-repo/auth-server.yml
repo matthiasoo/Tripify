@@ -9,10 +9,17 @@ spring:
     driverClassName: org.postgresql.Driver
     username: postgres
     password: ${DB_PASSWORD}
+    hikari:
+      initialization-fail-timeout: -1
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        boot:
+          allow_jdbc_metadata_access: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
 
 eureka:
   client:
