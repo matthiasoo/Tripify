@@ -51,7 +51,7 @@ function CustomSelect({ value, options = [], onChange, className }) {
             </div>
             
             {isOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 min-w-[120%] max-h-48 overflow-y-auto bg-panel border border-outline rounded-xl shadow-2xl z-[100] flex flex-col backdrop-blur-xl
+                <div className="absolute top-[calc(100%+8px)] left-0 min-w-[120%] max-h-48 overflow-y-auto bg-panel border border-outline rounded-xl shadow-2xl z-[9999] flex flex-col
                                 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full">
                     {options.map(opt => (
                         <div 
