@@ -1,6 +1,14 @@
 # 🌍 Tripify
 
+<p align="center">
+  <img src="docs/home.png" alt="Tripify Home" width="850">
+</p>
+
 Tripify to nowoczesna aplikacja webowa do inteligentnego planowania podróży. Dzięki wykorzystaniu sztucznej inteligencji, aplikacja automatycznie generuje spersonalizowane plany wycieczek, rekomenduje miejsca warte odwiedzenia, a także dostarcza informacje o aktualnej pogodzie oraz zdjęcia z miejsc docelowych. 
+
+<p align="center">
+  <img src="docs/plan.png" alt="Tripify Wygenerowany Plan" width="850">
+</p>
 
 Projekt oparty jest na **architekturze mikrousług (Microservices)**, która zapewnia wysoką skalowalność, niezależność komponentów oraz wydajność.
 

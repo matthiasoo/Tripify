@@ -121,7 +121,7 @@ export default function Home() {
     return (
         <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-12 px-4 py-16">
             <div className="flex flex-col items-center gap-3">
-                <h1 className="bg-gradient-to-r from-primary to-[var(--color-glow)] bg-clip-text text-6xl font-extrabold tracking-tight text-transparent">
+                <h1 className="bg-gradient-to-r from-primary to-[var(--color-glow)] bg-clip-text text-6xl font-extrabold tracking-tight text-transparent pb-2">
                     Tripify
                 </h1>
                 <span className="mt-3 font-mono text-sm font-light text-muted">
